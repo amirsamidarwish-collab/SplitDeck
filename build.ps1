@@ -27,7 +27,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
         Copy-Item -LiteralPath README.md,LICENSE,THIRD-PARTY-NOTICES.md -Destination $output
         New-Item -ItemType Directory -Path (Join-Path $output 'docs'),(Join-Path $output 'licenses') -Force | Out-Null
-        Copy-Item -LiteralPath docs/installation.md,docs/troubleshooting.md,docs/performance-v0.2.2.md,docs/editor-preview.png -Destination (Join-Path $output 'docs')
+        Copy-Item -LiteralPath docs/installation.md,docs/troubleshooting.md,docs/performance-v0.2.2.md,docs/performance-v0.2.4.md,docs/editor-preview.png -Destination (Join-Path $output 'docs')
         $packageRoot = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.nuget/packages' }
         $deps = Get-Content -LiteralPath (Join-Path $output 'SplitDeck.deps.json') -Raw | ConvertFrom-Json
         foreach ($library in $deps.libraries.PSObject.Properties.Name) {

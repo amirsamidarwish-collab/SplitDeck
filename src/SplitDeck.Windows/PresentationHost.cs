@@ -95,12 +95,12 @@ internal sealed class PresentationHost:IDisposable
    var cursorInfo=new Native.CursorInfo{Size=Marshal.SizeOf<Native.CursorInfo>()};
    while(!stop.IsCancellationRequested){
     // Even a skipped Present needs explicit pacing; otherwise a static desktop spins.
-    long wait=presentationCadence.WaitTicks(Stopwatch.GetTimestamp());if(wait>0&&stop.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(wait/(double)Stopwatch.Frequency)))break;
+    long wait=presentationCadence.WaitTicks(Stopwatch.GetTimestamp());if(wait>0&&stop.Token.WaitHandle.WaitOne(PresentationWait.Milliseconds(wait,Stopwatch.Frequency)))break;
     Forms.Application.DoEvents();
     gpuDrawTimer.Poll();
     long captureStarted=Stopwatch.GetTimestamp();bool contentChanged=false;
     for(int i=0;i<captures.Count;i++){
-     if(gpuCaptures[i] is { } gpu){long updateStarted=Stopwatch.GetTimestamp();try{contentChanged|=gpu.Update();}finally{RecordMaximum(ref gpuUpdateMaxTicks[i],Stopwatch.GetTimestamp()-updateStarted);}continue;}
+     if(gpuCaptures[i] is { } gpu){long updateStarted=Stopwatch.GetTimestamp();try{contentChanged|=gpu.Update(presentationRate);}finally{RecordMaximum(ref gpuUpdateMaxTicks[i],Stopwatch.GetTimestamp()-updateStarted);}continue;}
      using var frame=captures[i]!.Take();if(frame is not null){contentChanged=true;if(textures[i] is null||textures[i]!.Description.Width!=frame.Width||textures[i]!.Description.Height!=frame.Height){views[i]?.Dispose();textures[i]?.Dispose();var desc=new Texture2DDescription{Width=(uint)frame.Width,Height=(uint)frame.Height,MipLevels=1,ArraySize=1,Format=Format.B8G8R8A8_UNorm,SampleDescription=new(1,0),Usage=ResourceUsage.Default,BindFlags=BindFlags.ShaderResource};textures[i]=device.CreateTexture2D(desc);views[i]=device.CreateShaderResourceView(textures[i]);}fixed(byte* p=frame.Pixels)context.UpdateSubresource(textures[i]!,0,null,(nint)p,(uint)(frame.Width*4),0);}
     }
     Interlocked.Add(ref CaptureTicks,Stopwatch.GetTimestamp()-captureStarted);bool allReady=true;

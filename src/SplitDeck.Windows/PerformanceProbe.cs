@@ -60,6 +60,7 @@ public static class PerformanceProbe
   try{
    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(25));await session.ApplyAsync(physical,profile,startup.Token);
    activeStartedUtc=DateTime.UtcNow;
+   await File.WriteAllTextAsync(report+".active.json",JsonSerializer.Serialize(new{session.HelperId,StartedUtc=activeStartedUtc},Json));
    await Task.Delay(1000); // Exclude the display-mode transition from steady-state samples.
    initialStats=await ReadCaptureStatsAsync(session.HelperId);
    await using var fixture=interactionWorkload?InteractionFixture.Start(display.Detect().Where(x=>x.IsVirtual).OrderBy(x=>x.X).ToArray(),TimeSpan.FromSeconds(20)):null;
@@ -110,8 +111,9 @@ public static class PerformanceProbe
  {
   string folder=Path.Combine(DriverInstallation.Root,"sessions");if(helperId is null||!Directory.Exists(folder))return null;
   foreach(string file in Directory.GetFiles(folder,"*.json.performance").OrderByDescending(File.GetLastWriteTimeUtc)){
-   var state=JsonSerializer.Deserialize<RecoveryJournal>(await File.ReadAllTextAsync(file[..^".performance".Length]));
-   if(state?.HelperId==helperId){using var parsed=JsonDocument.Parse(await File.ReadAllTextAsync(file));return parsed.RootElement.Clone();}
+   var state=await OptionalTelemetry.ReadAsync(file[..^".performance".Length]);
+   if(state is JsonElement journal&&journal.TryGetProperty("HelperId",out var identity)&&identity.TryGetInt32(out int id)&&id==helperId)
+    return await OptionalTelemetry.ReadAsync(file);
   }
   return null;
  }

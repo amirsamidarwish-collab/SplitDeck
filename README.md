@@ -2,13 +2,13 @@
 
 SplitDeck is an experimental Windows app that presents two or three virtual monitors on one physical display. You can give each region its own shape, visible size, render resolution and refresh target. A game and Discord can use separate Windows displays while sharing an ultrawide panel.
 
-The current candidate is v0.2.3. It still adds substantial GPU work. In the latest 120/30 Hz comparison, total GPU utilization averaged 29.62% with normal presentation and 26.81% with a diagnostic mode, but their pre-split baselines also differed: 16.0% and 10.4%. CPU use increased from 21.76% to 25.77%, and power use was not consistently lower. This does not establish an overall improvement, so normal presentation remains the default. See the [performance report](docs/performance-v0.2.2.md) for the trial conditions and earlier results. Gaming FPS, latency and equivalence to physical monitors have not been established.
+The current candidate is v0.2.4. It fixes competing capture clocks that could make mixed-refresh motion uneven. In a 144/30 Hz comparison, animation-phase presentations increased from 36.61 to 50.10 per second, while total GPU usage stayed around 18.3%. That is a pacing improvement, not a demonstrated GPU reduction or a measurement of displayed FPS. The test needed a browser-only occlusion override; ordinary Chrome/Electron visibility remains an open issue. See the [performance report](docs/performance-v0.2.4.md) for conditions, tradeoffs and limits. Performance equivalent to physical monitors has not been established.
 
 ![SplitDeck Windows editor](docs/editor-preview.png)
 
 ## Download and start
 
-Get `SplitDeck-0.2.3-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). Extract the entire ZIP to a folder, then open `SplitDeck.exe`. The portable package includes the .NET runtime and signed driver files; you do not need to install .NET separately. GitHub's source-code ZIP is for building the app and does not contain the portable executable.
+Get `SplitDeck-0.2.4-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). Extract the entire ZIP to a folder, then open `SplitDeck.exe`. The portable package includes the .NET runtime and signed driver files; you do not need to install .NET separately. GitHub's source-code ZIP is for building the app and does not contain the portable executable.
 
 1. Select the physical monitor and choose two or three screens. Editing the preview does not change Windows display settings.
 2. Click **Setup driver** if shown, then approve Windows' administrator prompt. Setup prepares the managed devices for the selected screen count and leaves them disabled.

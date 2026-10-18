@@ -8,7 +8,7 @@ Keep the monitor awake and Windows unlocked while setting up or applying a layou
 
 ## Extract the portable package
 
-1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.3-windows-x64.zip`. If the repository is private, GitHub access is required.
+1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.4-windows-x64.zip`. If the repository is private, GitHub access is required.
 2. Use Windows' **Extract All** to unpack the ZIP. `SplitDeck.exe` is at the ZIP's root.
 3. Open `SplitDeck.exe` from the extracted folder. Keep the DLLs, `assets` and other accompanying files there.
 
@@ -16,10 +16,10 @@ The package includes the .NET runtime and driver assets. You do not need a separ
 
 `SplitDeck.exe` is not code signed. The bundled driver DLL and catalog have valid signatures; those signatures do not cover the app executable. Windows may show an unfamiliar-app warning.
 
-The release also provides `SplitDeck-0.2.3-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
+The release also provides `SplitDeck-0.2.4-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
 
 ```powershell
-Get-FileHash .\SplitDeck-0.2.3-windows-x64.zip -Algorithm SHA256
+Get-FileHash .\SplitDeck-0.2.4-windows-x64.zip -Algorithm SHA256
 ```
 
 Compare it with the value in the `.sha256` file. If they differ, download the ZIP again before running it.

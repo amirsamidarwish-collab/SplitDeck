@@ -3,6 +3,10 @@ using SplitDeck.Core;
 using System.Xml.Linq;
 if(args.Length==2&&args[0]=="--window-rescue-fixture")return await NativeWindowRescueTests.RunFixtureAsync(args[1]);
 var tests=new List<(string,Func<Task>)>{("Safety regressions",SafetyTests.Run),
+ ("Paced mixed-refresh capture retains fast opportunities and slow-source budget",PacedCaptureTests.MixedRates),
+ ("Optional telemetry survives a transient sharing lock and partial JSON",OptionalTelemetryTests.Sharing),
+ ("Presentation waits preserve fractional deadlines across paired capture clocks",PresentationWaitTests.FractionalDeadlines),
+ ("Capture flow separates timeouts pointer frames cadence skips and image age",CaptureFlowTests.Counters),
  ("Fresh install rollback retains ownership when new-device removal fails",FreshInstallTests.FailedRemovalKeepsOwnership),
  ("Fresh install rollback clears metadata only after confirmed removal",FreshInstallTests.RemovedDeviceClearsAttempt),
  ("CI headless classification retains offscreen graphics tests and excludes awake desktop tests",TestExecutionPolicy.Classification),

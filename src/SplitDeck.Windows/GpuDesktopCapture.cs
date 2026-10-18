@@ -11,7 +11,8 @@ internal sealed class GpuDesktopCapture:IDisposable
  private ID3D11Texture2D? image;private bool frameHeld,hasImageForDuplication,identityRotation;
  private readonly Vortice.RawRect[] copyDestinations=new Vortice.RawRect[FrameCopyPolicy.MaximumRectangles];
  private readonly CaptureMetadataProfiler metadata;private readonly GpuQueryTimer copyTimer;
- internal CaptureMetadataSnapshot GpuProfileSnapshot=>metadata.Snapshot(copyTimer.Snapshot);
+ private readonly CaptureFlow flow=new(Stopwatch.Frequency);
+ internal CaptureMetadataSnapshot GpuProfileSnapshot=>metadata.Snapshot(copyTimer.Snapshot) with{Flow=flow.Snapshot};
  internal ID3D11ShaderResourceView? View{get;private set;}
  internal ID3D11Texture2D? Texture=>image;
  internal long FrameCount{get;private set;}
@@ -34,10 +35,10 @@ internal sealed class GpuDesktopCapture:IDisposable
   }
   return null;
  }
- internal bool Update()
+ internal bool Update(int? pollingRate=null)
  {
   copyTimer.Poll();long now=Stopwatch.GetTimestamp();recovery.ThrowIfExpired(now);
-  if(!cadence.Due(now))return false;
+  if(!cadence.Due(now,pollingRate)){flow.Skip();return false;}
   if(duplication is null){
    if(!recovery.ShouldAttempt(now))return false;
    try{duplication=CreateDuplication();}
@@ -45,12 +46,13 @@ internal sealed class GpuDesktopCapture:IDisposable
    if(duplication is null)return false;
   }
   if(frameHeld){var released=duplication.ReleaseFrame();frameHeld=false;if(DuplicationRecovery.IsRecoverable(released.Code)){Invalidate(now);return false;}released.CheckError();}
-  var result=duplication.AcquireNextFrame(0,out var info,out var resource);
+  flow.Attempt();var result=duplication.AcquireNextFrame(0,out var info,out var resource);
   if(DuplicationRecovery.IsRecoverable(result.Code)){resource?.Dispose();Invalidate(now);return false;}
-  if(result.Code==unchecked((int)0x887A0027))return false;result.CheckError();
+  if(result.Code==unchecked((int)0x887A0027)){flow.Timeout();return false;}result.CheckError();
   frameHeld=true;
   using(resource){
-   if(!CpuCaptureBudget.NeedsImage(info.LastPresentTime,hasImageForDuplication))return false;
+   if(!CpuCaptureBudget.NeedsImage(info.LastPresentTime,hasImageForDuplication)){flow.Pointer();return false;}
+   flow.Image(Stopwatch.GetTimestamp(),info.LastPresentTime);
    using var texture=resource.QueryInterface<ID3D11Texture2D>();var d=texture.Description;
    if(d.Format!=Format.B8G8R8A8_UNorm)throw new InvalidOperationException("GPU capture requires an SDR BGRA display. Turn off HDR for this virtual screen.");
    if(image is null||image.Description.Width!=d.Width||image.Description.Height!=d.Height){
@@ -63,14 +65,21 @@ internal sealed class GpuDesktopCapture:IDisposable
    FrameCount++;metadata.Observe(info,(int)d.Width,(int)d.Height,FrameCount,plan);hasImageForDuplication=true;recovery.FreshFrame();return true;
   }
  }
- private void Invalidate(long now){frameHeld=false;hasImageForDuplication=false;duplication?.Dispose();duplication=null;recovery.Begin(now);}
+ private void Invalidate(long now){frameHeld=false;hasImageForDuplication=false;flow.ResetInterval();duplication?.Dispose();duplication=null;recovery.Begin(now);}
  public void Dispose(){copyTimer.Dispose();if(frameHeld)duplication?.ReleaseFrame();View?.Dispose();image?.Dispose();duplication?.Dispose();}
 }
 
 internal sealed class CaptureCadence(long ticksPerSecond,int rate)
 {
+ private readonly int requestedRate=Math.Clamp(rate,1,1000);
  private readonly long period=Math.Max(1,ticksPerSecond/Math.Clamp(rate,1,1000));private long? next;
- internal bool Due(long now){if(next is not long due){next=now+period;return true;}if(now<due)return false;next=due+((now-due)/period+1)*period;return true;}
+ internal bool Due(long now,int? pollingRate=null)
+ {
+  // The presenter already paces these calls. A second equal/faster source clock
+  // can discard every other opportunity when cursor/vsync work shifts phase.
+  if(pollingRate is >0&&requestedRate>=pollingRate)return true;
+  if(next is not long due){next=now+period;return true;}if(now<due)return false;next=due+((now-due)/period+1)*period;return true;
+ }
 }
 
 internal static class CpuCaptureBudget

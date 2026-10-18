@@ -6,7 +6,7 @@ namespace SplitDeck.Windows;
 
 internal sealed record CaptureCopyReasonSnapshot(string Reason,long Frames);
 internal sealed record CaptureCopyPlanSnapshot(long ActualCopyBytes,long PartialFrames,long FullFrames,IReadOnlyList<CaptureCopyReasonSnapshot> Reasons);
-internal sealed record CaptureMetadataSnapshot(string Source,int Width,int Height,long CopiedFrames,long FullCopyBytes,long MetadataBytes,long AccumulatedFrames,long CoalescedFrames,long MetadataSamples,long MetadataUnavailable,long MetadataTruncated,long DirtyRectangles,long DirtyPixelArea,long MoveRectangles,long MovePixelArea,GpuTimerSnapshot CopyTiming,CaptureCopyPlanSnapshot CopyPlan);
+internal sealed record CaptureMetadataSnapshot(string Source,int Width,int Height,long CopiedFrames,long FullCopyBytes,long MetadataBytes,long AccumulatedFrames,long CoalescedFrames,long MetadataSamples,long MetadataUnavailable,long MetadataTruncated,long DirtyRectangles,long DirtyPixelArea,long MoveRectangles,long MovePixelArea,GpuTimerSnapshot CopyTiming,CaptureCopyPlanSnapshot CopyPlan,CaptureFlowSnapshot? Flow=null);
 internal sealed class CaptureMetadataProfiler(string source)
 {
  private readonly RawRect[] dirty=new RawRect[256];private readonly OutduplMoveRect[] moves=new OutduplMoveRect[256];
