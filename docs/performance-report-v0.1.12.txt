@@ -1,0 +1,62 @@
+SplitDeck v0.1.12 EXPERIMENTAL - GPU and existing-window fixes
+18 October 2026
+
+CHANGES
+Unchanged content no longer triggers a full redraw/presentation. Source capture
+and cursor polling remain paced; cursor changes and a one-second keepalive still
+render. The watchdog measures completed polling, so intentional idle is not a
+false stall. Existing normal app windows are moved from the physical desktop to
+the virtual work areas, then restored after the original topology returns.
+Placement recovery verifies window identity and preserves current min/max state.
+The v0.1.11 cursor boundary and visibility fixes remain included.
+
+VERIFICATION
+Release build: zero warnings/errors. Windows checks: 64/64. Core: 11/11.
+Native fixture covers normal, maximized and minimized windows, visible bounds,
+restoration and unchanged foreground focus. Policy checks cover frame skipping,
+cursor changes, keepalive and window placement. An earlier native graphics marker
+test failed once; its targeted rerun and subsequent full suites passed.
+
+Final review found owned modal dialogs were excluded. A real ShowDialog fixture
+reproduced the missing dialog before the fix. Eligible dialog families now move
+with their captured parent app. The native regression verifies all four windows,
+actual bounds, unchanged focus and the owner remaining disabled by its modal.
+This final addition passed the full 64/64 Windows suite after the live trial;
+it has native fixture coverage, not a separate Chrome/Discord topology trial.
+
+Final live trial lasted about 46 seconds with both virtual targets set to 60 Hz.
+Chrome was fitted to portrait Screen 1, with Discord visible in the split.
+Four Chrome phases completed: static, animation, static after animation, new tab
+and typing. Typing verified; browser reported 607 animation callbacks over about
+10 seconds (callbacks are not proof of displayed FPS). User confirmed both apps
+work. All four existing windows moved and restored with no reported issues.
+Normal topology restored, helper exited, no abort and no operation error.
+
+PERFORMANCE - TARGET NOT YET MET
+Matched earlier Chrome workload, with Discord running but its window stranded:
+old renderer averaged 25.44% total GPU busy time; adaptive renderer 20.06%.
+That is about 21% lower total GPU utilization for that comparison only.
+The final visible Chrome + Discord workload differs: total GPU averaged 25.87%
+active versus 9.60% baseline. CPU averaged 22.75% active versus 30.89% baseline;
+background activity varies, so this does not establish negative CPU overhead.
+Poll cadence was 59.94/s; content-driven presentations averaged 43.60/s.
+BudgetExceeded remains true and the benchmark outcome is NeedsReview.
+GPU busy percentage is not a percentage of lost gaming performance.
+
+The first visible-app attempt hit the CPU safety guard (two 100% samples) and
+restored correctly. The repeat above completed without weakening the guards.
+An initial pre-optimization attempt was blocked by low available memory.
+All trial reports, including unsuccessful attempts, are preserved in validation.
+
+LIMITS
+No physical dual-monitor performance comparison, long gaming test or measured
+physical mouse latency. Chrome automation used its isolated DevTools profile;
+native desktop-control tooling was unavailable. The user supplied the live app
+usability confirmation. Higher-refresh gaming and animated cursor artwork remain
+unverified. These improvements do not establish near-zero overhead.
+
+USE
+Close older SplitDeck editors, then run SplitDeck.exe from the v0.1.12 folder.
+Keep the complete folder together. Apply stays active until Restore desktop,
+Ctrl+Alt+Shift+F12, editor close or automatic failure recovery.
+Existing windows are moved automatically; Windows+Shift+Arrow can reposition one.

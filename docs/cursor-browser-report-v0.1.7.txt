@@ -1,0 +1,101 @@
+SplitDeck v0.1.7 EXPERIMENTAL — cursor and Chrome bug report
+18 October 2026
+
+RESULT
+Three fix agents implemented the reported findings, followed by independent
+review and root verification. The candidate is built and packaged. Live split
+cursor responsiveness remains unverified: the v0.1.6 Chrome split attempt
+failed before ACTIVE, and Windows requested a driver restart. Do not Apply
+another layout until Windows has restarted and recovery has completed.
+
+CURRENT DESKTOP
+Read-only diagnostics confirm only LG DISPLAY1, 2560 x 1080 at 144 Hz, primary
+at (0,0). No virtual output is attached. Desktop-only recovery exited 0 and
+retained the incomplete restart journal without running driver disable.
+At command entry, its Before snapshot already contained only the physical
+monitor; this run therefore does not prove the new live detach path.
+Driver instances report codes 0 and 22. A persistent restart marker blocks
+Apply with the actual reason, rather than accepting this as completed cleanup.
+
+UI-01 — repeated synchronous trust checks during editing
+Confirmed: every editor Render read a property that reopened device bindings,
+hashed driver files and checked signatures on the UI thread.
+Changed: cached readiness, background single-flight refresh, invalidation of
+stale results, fresh validation at Apply and authoritative helper checks.
+Review also caught busy state persisting through the background refresh;
+Restore and close now remain available once the operation itself finishes.
+Four slow-probe/cache/error regression groups pass. --setup-driver refreshes
+the new cache before reporting success.
+
+CURSOR-01 — fixed fabricated pointer
+Confirmed: the renderer ignored Windows' cursor handle and hotspot and drew
+one triangle for every cursor type.
+Changed: native cursor rasterization on handle change, cached small GPU
+textures, native hotspot/scaling/visibility and screen clipping. Alpha and
+monochrome AND/XOR cursors are supported without desktop CPU readback.
+Native WARP offscreen tests compare actual rendered pixels for handmade
+alpha/monochrome cursors; standard arrow/I-beam/hand/wait raster checks pass.
+Limitation: animated cursor artwork uses its first frame. OS pointer latency
+and the user's loading/unresponsive symptom require live retesting.
+
+PACE-01 — reduced-rate presentation deadline drift
+Confirmed: relative post-Present sleep could miss further vsync boundaries.
+Changed: persistent pre-render deadlines, skip missed slots without spinning
+or catch-up bursts. Physical presentation smoke measured 61 frames / 2.010856
+seconds = 30.335 fps for a 30 Hz target. One GPU source, two regions, zero
+CPU fallback streams and zero continuous desktop CPU readback. This brief
+physical-only test does not establish virtual capture or game performance.
+
+CAPTURE-02 — transition ACCESS_LOST aborted activation
+Observed in the Chrome split trial before ACTIVE.
+Changed: reacquire duplication on the same output/device with 100 ms backoff,
+three-second deadline and reset only after a fresh image. Device loss and
+security errors remain fatal. Deterministic retry/deadline tests pass;
+actual driver transition recovery has not been exercised in v0.1.7.
+
+RECOVERY-02 — disable result 3010 left an invisible output attached
+Observed: physical LG restored but an owned output remained at (2560,0).
+Changed: recognize restart results, attempt all device disables, persist
+restart state, block activation and retain incomplete journals. Partial
+recovery can detach exclusively owned/trusted outputs while protecting foreign
+and externally changed displays. A failed replacement physical-mode stage
+keeps the virtual primary attached. Cursor confinement is released before
+recovery. Deterministic failure/restart/ownership tests pass. The current normal
+topology is confirmed; live detach in this new path is not yet proven.
+
+HARNESS-01 — false ACTIVE inference
+Initial watcher used cleanup telemetry + incomplete journal as proof of ACTIVE.
+The old result is explicitly INVALIDATED. The corrected harness requires a
+fresh ACTIVE heartbeat, increasing presented-frame counters, matching helper,
+browser phase timestamps inside the benchmark ACTIVE interval, enough actual
+ACTIVE samples, helper exit and confirmed restoration. Regression rejects the
+failed run, missing heartbeat, wrong helper, out-of-interval phase and failed
+restoration. No successful Chrome split comparison is claimed.
+
+CHROME BASELINE
+Dedicated Chrome profile and localhost fixture: six target clicks delivered,
+typing and scrolling correct, all six CSS cursor styles correct. Browser rAF
+average 6.965 ms/frame, p95 7.1 ms (baseline only). This used Chrome DevTools
+synthetic input; it did not measure physical mouse or OS cursor latency.
+Native computer-use tooling failed initialization (kernel asset path error3).
+The dedicated test Chrome and server were closed after the test.
+
+VERIFICATION
+- Windows Release component runner: 37/37 groups passed, including native
+  cursor pixels, desktop GPU marker, capped fallback, successive flip target,
+  and 16-second presenter lifetime/emergency shortcut checks. These native
+  checks do not activate the virtual driver or change display topology.
+- Core Release runner: 11/11 groups passed. Total: 48/48.
+- Self-contained x64 app build with warnings as errors: 0 warnings, 0 errors.
+- Physical presentation smoke: exit0; 30.335 fps at target30; rendered PNG
+  inspected. No topology mutation.
+- Editor screenshot/ordinary close smoke: exit0; screenshot inspected,
+  version0.1.7 and restart explanation visible, Apply disabled.
+- Independent final review: no remaining important code defect found.
+
+NEXT LIVE CHECK
+Save work and restart Windows manually. Use the v0.1.7 folder, not an older
+open editor. Recovery must finish before another Apply. Then repeat the bounded
+Chrome interaction and resource comparison with the monitor awake. No restart
+was automated. No game workload, real dual-monitor comparison, or guarantee
+of low CPU/GPU overhead has been established.

@@ -1,0 +1,35 @@
+Implementation plan - approved three-screen design
+
+1. Core/editor (one owner): Contracts.cs, MainWindow.xaml/.cs, Core.Tests.
+   Preserve positional constructors; append optional ScreenSettings integer
+   VisibleWidth=0, VisibleHeight=0, RenderWidth=0, RenderHeight=0. Append optional
+   LayoutProfile ScreenSettings? Third=null, int SecondShare=0, int PrimaryIndex=0.
+   Add LayoutProfile.Screens read-only ordered collection (JsonIgnore).
+   Generalize Calculate to 2/3 columns, validate positive fitting geometry and
+   exact aspect compatibility. Presets.Triple(int panelHz) builds 9:16/16:9/9:16
+   with center primary; default 19/62/19 shares, native pixels,30/60/30Hz capped.
+   Add exact-size fields and 3 tabs/reorder/add-remove/primary UI, preserve old
+   slider semantics for two screens. Write failing regression cases first,
+   implement, run Core tests and compile editor.
+
+2. Driver/helper (separate owner): DriverInstallation, DriverConfiguration,
+   DriverPairUpgrade, DisplayService, HelperRuntime, readiness and tests.
+   Accept 1..3 owned devices; RequireOwned(int count=2); setup ensure requested
+   count; reuse signed package. Session activates only layouts.Count, assigns
+   PrimaryIndex, maps modes across 2/3 outputs. Preserve old callers with default
+   arguments; no destructive removal of devices on count reduction. Test count
+   upgrades, foreign device refusal, interrupted upgrade cleanup and mode XML.
+   Live installation/topology is root-only, after compilation/tests.
+
+3. GPU investigation first; no global refresh or resolution reduction.
+   Attribute process GPU engines with matched Chrome/Discord workload. Instrument
+   dirty/move coverage, accumulated frames and sampled nonblocking GPU timestamps.
+   Accept GetData S_OK only, skip/discard unavailable/disjoint samples; never wait
+   or Flush for profiling. Use evidence to choose one optimization, then exact
+   pixel regression before implementation and repeat matched live trial.
+
+4. Integration: root builds Release warnings-as-errors and executes Core/Windows
+   suites after agents stop editing. Review changes; fix concrete failures.
+   Preserve normal desktop before/after bounded trials; collect GPU watts,
+   clocks and busy time, helper/driver errors and successful window restoration.
+   Package candidate only with honest tested scope and full evidence.

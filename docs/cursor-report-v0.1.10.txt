@@ -1,0 +1,62 @@
+SplitDeck v0.1.10 EXPERIMENTAL — cursor fix and interaction testing
+18 October 2026
+
+CONFIRMED CURSOR FAULT AND FIX
+On this machine the first GetCursorInfo call succeeds and clears CURSORINFO.cbSize.
+The presenter initialized cbSize only once. Subsequent queries failed with
+ERROR_INVALID_PARAMETER (87), so the cursor was drawn only once and disappeared.
+This was reproduced on the unchanged physical desktop without the virtual driver.
+The native wrapper now initializes cbSize immediately before EVERY query.
+A separate GDI buffer-canary test found no cursor bitmap header overrun.
+Microsoft API contract: initialize cbSize before calling GetCursorInfo:
+https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getcursorinfo
+
+VERIFICATION
+- Windows suite: 50/50, including native graphics, real-arrow pixels on both
+  source regions, scaled portrait edge clipping, and hidden/suppressed states.
+- Core suite: 11/11. Total 61 checks. App build: 0 warnings, 0 errors.
+- Repeated native cursor queries: 24/24 successful across real cursor raster reads.
+- Physical compositor before fix: cursor draws 1, subsequent query error87.
+- Physical compositor after fix: cursor draws61, query error0, valid source1.
+- Independent cursor/recovery review found no important defect. A report-label
+  issue was corrected: budget violations are explicit NeedsReview results.
+
+LIVE CASES BEFORE THE FINAL CURSOR FIX (ALL RESULTS RETAINED)
+1. 144/30Hz controlled workload: guard stopped during popup phase on resource
+   spikes; only animation completed. Restoration/helper exit confirmed.
+2. 60/60Hz comparison: also stopped during popup phase. No claim that lowering
+   refresh fixes the reported freeze. Restoration confirmed.
+3. User-operated Windows desktop menus: user confirmed both screens responded
+   normally, then reported invisible cursor during split only. The trial later
+   stopped on two CPU samples above90%; leading sampled consumers included Edge.
+   One presentation interval reached182.5ms. It is not a low-overhead pass.
+4. Diagnostic workload allowed brief spikes while retaining absolute resource
+   limits: all five cases completed on BOTH virtual screens: animation, popup
+   menus, scrolling, moving windows, and combined operations. 140.44presentations/s,
+   no continuous CPU readback; max recorded presentation interval59.82ms.
+   Per-screen event-loop maximum58.08ms, 13menu openings,87scroll operations,
+   10window moves. Restored=true, HelperExited=true, no operation error.
+   CPU29.07% baseline/24.64% active and GPU17.74%/25.09% are system measurements
+   with varying background activity, not isolated SplitDeck overhead.
+   Legacy Outcome=PartialMeasurements in this raw report must NOT be read as
+   a performance pass: its workload sidecar records BudgetExceeded=true.
+
+LIMITS AND CURRENT STATUS
+The intermittent near-freeze has not been conclusively reproduced or resolved.
+The cursor failure is independently reproduced and fixed. Do not equate a high
+presentation count with input responsiveness. Automated fixtures manipulate only
+our own windows and are not a substitute for Explorer/physical mouse validation.
+No game FPS, long session, or physical dual-monitor overhead equivalence claim.
+Animated cursor artwork still displays its first frame.
+Native desktop-control tooling failed before initialization; the user performed
+only the explicitly reported Explorer menu clicks. No driver/service/security
+configuration was changed to suppress background load.
+The final post-fix live split trial did NOT run: Windows elevation did not
+complete and its request has ended. Physical-native checks above completed.
+Packaged diagnostics confirm v0.1.10, driver readiness, and only the normal LG
+physical desktop attached. Run timed tests.cmd is included for a direct launch
+using right-click > Run as administrator; Windows approval is still required.
+
+USE
+Close older SplitDeck editors and run SplitDeck.exe from the v0.1.10 folder.
+Keep the folder together. Restore desktop or Ctrl+Alt+Shift+F12 ends a split.

@@ -1,0 +1,171 @@
+SplitDeck — proposed Windows app design
+17 October 2026
+Status: approved design; experimental implementation available. See README
+and docs/verification.md for the implemented and verified scope.
+
+PRODUCT
+
+A local Windows desktop app that presents two genuine virtual monitors on
+one physical monitor. A user detects a monitor, edits the layout in a
+preview, and selects Apply. Other apps can select the virtual monitors as
+display targets. The project is prepared for public GitHub distribution.
+
+USER FLOW
+
+1. Detect connected physical monitors and select the intended one. Show
+   model, active pixel resolution, refresh rate, and approximate diagonal
+   inches when the monitor reports physical dimensions. An unavailable or
+   zero physical dimension produces "Size unavailable", never a guess.
+   Allow a manual inches override. Pixel bounds govern layout geometry.
+2. Default to two landscape 16:9 virtual screens side by side. Display both
+   within a proportional preview of the physical screen. Preserve aspect
+   ratio and center the pair; visibly mark unused physical pixels.
+3. Select either virtual screen to edit its name, landscape/portrait
+   orientation, aspect ratio, resolution, and target refresh rate. Include 16:9, 9:16, and
+   custom ratios, plus a separate "Fill available space" preset. Allow
+   changing the divider and swapping the left/right order. Settings must
+   never silently stretch a locked aspect ratio.
+   Add a "Prioritize Screen 1" preset that gives Screen 1 more physical
+   area and the highest supported refresh target while reducing Screen 2's
+   compositor sampling target. Keep both screens manually editable.
+   Distinguish physical pixel area from virtual render resolution: rendering
+   at a higher resolution and downsampling does not create physical pixels.
+   A physical panel has one output refresh mode; virtual-screen refresh and
+   compositor sampling targets are not independent physical refresh rates.
+   Do not sum their Hz values or promise that lowering Screen 2's rate gives
+   Screen 1 extra Hz, GPU scheduling priority, or guaranteed game FPS.
+   Show target versus detected values and only offer driver-supported modes.
+4. Show the exact virtual resolutions and occupied physical rectangles
+   before Apply. Reject invalid dimensions and layouts that cannot fit
+   without scaling. A clearly selected scaling mode may fit larger virtual
+   resolutions while preserving their aspect ratios.
+5. Apply creates/configures two virtual monitors, arranges them in Windows,
+   and starts a presentation surface over the selected physical display.
+   Show progress and real errors; never report success merely because a
+   configuration file was saved or a command was sent.
+6. Offer Keep / Revert with a 15-second countdown after activation.
+   Restore the previous configuration on timeout or activation failure.
+7. Provide a tray command and Ctrl+Alt+Shift+F12 to return to the ordinary
+   desktop. Profiles can be saved locally and applied again explicitly.
+
+GEOMETRY EXAMPLES
+
+At the development machine's current 2560 x 1080 resolution:
+- Two 16:9 screens at native pixel scale: 1280 x 720 each, with 180 unused
+  rows above and below the centered pair.
+- Two equal regions filling the whole panel: 1280 x 1080 each. These are
+  32:27, not 16:9; the preview must say so.
+- A 16:9 landscape screen beside a 9:16 portrait screen can be fit as a
+  group with a common height, preserving both ratios. An integer-ratio
+  fit using 16k x 9k and 9m x 16m may leave a few unused pixels rather than
+  quietly claiming an inaccurate aspect ratio.
+
+CHOSEN APPROACH AND ALTERNATIVES
+
+Recommended: build the app around a pinned, signature-verified release of
+VirtualDrivers Virtual Display Driver, with an app-owned compositor,
+layout editor, input routing, and recovery process. This reuses the system
+component while developing the actual requested product.
+
+Alternative: write a new IddCx display driver. It gives control over frame
+delivery but adds driver development, signing, and distribution work.
+
+Alternative: use ordinary borderless windows and snapping. This is simpler
+but does not satisfy the requirement that Windows recognizes virtual
+monitors, so it is not the selected implementation.
+
+ARCHITECTURE
+
+Desktop app: C# / WPF targeting a supported .NET LTS release. The editor
+and layout calculation stay separate from platform changes and rendering.
+
+Monitor discovery: Windows display APIs associate physical display paths,
+pixel bounds, DPI, rotation, and refresh rate with monitor identities.
+EDID/WMI physical dimensions provide approximate inches when available.
+Do not treat collection order as a reliable monitor identity mapping.
+
+Layout engine: pure, unit-testable geometry produces virtual display
+modes, destination rectangles, aspect-ratio-preserving transforms, and
+inverse coordinate maps. Work in physical pixels to avoid DPI errors.
+
+Driver adapter: a pinned signed package, owned configuration folder, and
+Windows device lifecycle operations configure modes while the managed
+device is disabled, then enable it. Enforce timeouts, validate process
+results, and enumerate Windows displays to verify the expected outputs.
+Reject unrelated VDD installations and preserve their configuration.
+The actual enable/configuration path still requires live validation.
+
+Presentation: a GPU compositor receives/captures frames from the virtual
+outputs and draws them in the configured rectangles of a borderless,
+non-activating physical-display host. The physical monitor must remain
+enabled as the presentation output. Accordingly, Windows will generally
+enumerate the physical output plus two virtual outputs. This app cannot
+promise to replace one physical output with exactly two hardware outputs.
+
+Input: transform destination pointer positions into the corresponding
+virtual desktop coordinates, focus the intended app, and provide visible
+cursor feedback. Preserve keyboard shortcuts and support switching
+between the two screens. Relative mouse input, cursor clipping, focus,
+and elevated apps require dedicated compatibility testing. Do not claim
+that all fullscreen or anti-cheat games will work before those tests.
+
+Session coordinator: validate dependencies and modes; capture the prior
+Windows topology and app-owned driver settings; prepare a recovery
+process; apply virtual modes; verify outputs; initialize presentation and
+input; then begin the Keep / Revert countdown. Recover in reverse order
+on any failure. Store a recovery journal before mutations and use an
+independent watchdog so an app crash can restore the session. If another
+app has changed the topology, avoid blindly replaying stale settings.
+
+Driver setup: the app explains and performs required driver installation
+through normal Windows elevation. Use trusted signed packages and
+integrity verification. Do not require disabling Secure Boot, test mode,
+or signature enforcement. Development and editor preview must work
+without installing a driver or changing the current desktop.
+
+DELIVERY AND VERIFICATION
+
+Deliver source, license, third-party notices, README, build instructions,
+Windows CI, automated tests, and a buildable desktop app. Include an
+explicit development-versus-tested status for each system capability.
+Preparing source for GitHub does not itself publish a repository.
+
+Automated checks cover fitting two 16:9 screens, mixed portrait layouts,
+custom ratios, rounding, invalid inputs, DPI-independent pointer mapping,
+profile serialization, and rollback state transitions. Driver adapter
+contract tests must not substitute for live activation tests.
+Verify per-screen refresh selection, priority preset versus manual edits,
+and the physical-area/render-resolution distinction. Test high-resolution
+downsampling and two different virtual refresh rates against the one
+physical output cadence; report measured behavior separately from targets.
+
+On Windows, verify actual display enumeration before/after Apply; live
+content on both halves; pointer and keyboard interaction; Keep/Revert;
+normal stop; forced app exit; missing driver; unsupported mode; unplug;
+and restoration. Test a fullscreen game and Discord together before
+claiming the gaming use case works. Record measured presentation delay
+and frame delivery rather than promising native-monitor latency.
+
+IMPLEMENTATION ORDER
+
+First establish a live technical path: two OS-enumerated virtual monitors,
+both surfaces visible on one monitor, usable input, and reliable restore.
+Build the polished discovery/editor workflow around that proven path.
+Do not deliver a preview-only UI as the finished virtual-monitor app.
+
+REFERENCES
+
+Microsoft indirect display driver model:
+https://learn.microsoft.com/en-us/windows-hardware/drivers/display/indirect-display-driver-model-overview
+
+Microsoft monitor physical dimensions and missing-size behavior:
+https://learn.microsoft.com/en-us/windows/win32/wmicoreprov/wmimonitorbasicdisplayparams
+
+Microsoft Desktop Duplication API:
+https://learn.microsoft.com/en-us/windows-hardware/drivers/display/desktop-duplication-api
+
+Virtual Display Driver upstream:
+https://github.com/VirtualDrivers/Virtual-Display-Driver
+
+Upstream driver control protocol and configuration notes:
+https://github.com/VirtualDrivers/Virtual-Driver-Control/blob/main/VirtualDriverControl/README.md

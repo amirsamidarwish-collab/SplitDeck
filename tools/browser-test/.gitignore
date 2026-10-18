@@ -1,0 +1,6 @@
+chrome-simulation-profile/
+browser-test-deps/
+__pycache__/
+*.pyc
+*.json
+*.png

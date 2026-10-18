@@ -1,0 +1,47 @@
+SplitDeck comparison - checked 18 October 2026
+
+The core concept is not unique. Genuine virtual monitors rendered back onto one
+physical screen already exist in other projects. These are source/documentation
+comparisons, not independent performance tests of competitors.
+
+MonitorSplit (the name you remembered)
+https://github.com/JoelBeja2000/MonitorSplit
+https://raw.githubusercontent.com/JoelBeja2000/MonitorSplit/main/docs/ARCHITECTURE.md
+https://raw.githubusercontent.com/JoelBeja2000/MonitorSplit/main/driver/MonitorSplitDriver.cpp
+Windows IDD/UMDF2 driver plus WPF editor, two outputs, split ratio and independent
+modes. Its README requires test signing or a production-signed driver. The driver
+swap-chain code reviewed acknowledges frames without drawing them onto a physical
+output; the architecture explicitly describes that behavior. Therefore its virtual
+monitor creation is not evidence of the complete visible split that SplitDeck's
+compositor supplies. I have not installed or benchmarked MonitorSplit.
+
+DesktopSplitter - closest Windows competitor found
+https://github.com/swiiftex/DesktopSplitter
+https://raw.githubusercontent.com/swiiftex/DesktopSplitter/main/README.md
+Its README describes 2-4 monitors, a visual editor, independent segment sizes,
+DXGI capture plus Direct3D composition, cursor confinement and window rescue.
+It also documents an experimental physical-display hiding path on particular
+Windows editions. The author reports 240 Hz on their hardware; that is not an
+independent latency or overhead benchmark. This has substantial overlap with
+SplitDeck and currently documents more layout/multi-monitor features.
+
+Telas - macOS analogue
+https://github.com/eduardoworrel/telas
+Two virtual displays, ScreenCaptureKit presentation and custom cursor routing.
+It relies on a private macOS API and labels itself experimental. It confirms that
+the general architecture is not unique, but is not a Windows alternative.
+
+SplitDeck's useful current differentiation
+- Game + portrait presets with explicit aspect-ratio preservation.
+- Separate visible-pixel layout and render resolution, with independent refresh
+  targets and a screen-priority preset. These are controls, not a guarantee of
+  preferential GPU scheduling or higher game FPS.
+- Detailed restoration journals, bounded diagnostics and regression evidence.
+- Existing pinned signed upstream driver, without requesting test-signing mode.
+
+These are a combination of product choices, not a verified first-in-the-world
+feature list. A defensible advantage would be measured low overhead, reliable
+cursor/input behavior, straightforward setup and recovery on ordinary PCs. We
+have not yet established that performance advantage or physical dual-monitor
+equivalence. SplitDeck currently supports two regions; DesktopSplitter documents
+more layouts, window rescue, and additional-monitor behavior.

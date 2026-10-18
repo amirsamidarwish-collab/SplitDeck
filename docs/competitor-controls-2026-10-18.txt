@@ -1,0 +1,51 @@
+Competitor controls: source inspection, 2026-10-18
+
+Scope: primary GitHub source and documentation only. No installations, builds, or runtime comparisons. Source presence is not proof of reliable runtime behavior.
+
+Inspected revisions:
+MonitorSplit: 5067e45d70deb0d3344b3091ba134f732cb894c1
+DesktopSplitter: e59728e804dfd46a06d7c390d845ded2d8283d55
+Telas: 79d753db28214afdc935ba544b6c4da43d099590
+
+DesktopSplitter (Windows): closest competitor
+- Implements 2, 3, or 4 screens. LayoutDefinition implements three columns and 16:9-center: center first/primary, side wings fill remainder. This directly overlaps landscape center plus portrait sides when physical dimensions allow.
+- Per-zone W/H text fields exist in XAML and SegmentViewModel; ApplyService sends each requested resolution to the virtual driver. Physical viewports are separately computed by normalizing column/row tracks, so typed resolutions need not equal physical pixel allocations. The geometry is nevertheless derived from those same resolution inputs; there is no independent viewport-size field in the inspected segment model.
+- Aspect ratio is adjustable through W/H and draggable boundaries. EditorVisuals supplies informational ratio badges, not a general aspect-ratio picker or lock. The explicit center preset fixes a 16:9 target where minimum dimensions permit.
+- Independent user-selected refresh is absent from the inspected app path: every segment receives physical.MaxRefreshMillihertz; XAML explicitly labels all zones as running at that rate. The driver protocol supports a per-mode refresh field, so this is an app limitation, not a fundamental driver limitation.
+- Segment dimension validation is 640..7680. A 2560-wide panel cannot retain a 1920-wide center and two 320-wide native-resolution sides within that minimum. The center preset clamps center width to leave minimum-size sides; it therefore need not remain 16:9 on narrower panels.
+Sources:
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/Models/LayoutDefinition.cs#L156-L213
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/ViewModels/SegmentViewModel.cs#L22-L43
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/MainWindow.xaml#L129-L159
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/MainWindow.xaml#L198-L218
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/Services/ApplyService.cs#L179-L195
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/Models/LayoutGeometry.cs#L15-L16
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/Models/LayoutGeometry.cs#L99-L123
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/app/ViewModels/EditorVisuals.cs#L35-L54
+https://github.com/swiiftex/DesktopSplitter/blob/e59728e804dfd46a06d7c390d845ded2d8283d55/shared/DeskSplitProtocol.h#L20-L49
+
+MonitorSplit (Windows)
+- Fixed two-screen model, with adjustable split-ratio slider. Landscape physical monitors split left/right; portrait physical monitors split top/bottom. No three-screen center-with-wings implementation found.
+- Config contains separate W/H/Hz per screen, but the visible W/H elements are readouts, while separate Hz inputs are actual text boxes. ApplyConfig recalculates dimensions from the physical size and split ratio, so the JSON model alone should not be described as an unconstrained exact-pixel UI.
+- Independent Hz exists in UI, config and the driver mode construction. No general aspect selector or independent render-vs-viewport controls found. Behavior was not run or validated.
+Sources:
+https://github.com/JoelBeja2000/MonitorSplit/blob/5067e45d70deb0d3344b3091ba134f732cb894c1/app/MonitorSplit/Models/SplitConfig.cs#L15-L61
+https://github.com/JoelBeja2000/MonitorSplit/blob/5067e45d70deb0d3344b3091ba134f732cb894c1/app/MonitorSplit/MainWindow.xaml#L231-L262
+https://github.com/JoelBeja2000/MonitorSplit/blob/5067e45d70deb0d3344b3091ba134f732cb894c1/app/MonitorSplit/MainWindow.xaml#L344-L359
+https://github.com/JoelBeja2000/MonitorSplit/blob/5067e45d70deb0d3344b3091ba134f732cb894c1/app/MonitorSplit/ViewModels/MainViewModel.cs#L203-L225
+https://github.com/JoelBeja2000/MonitorSplit/blob/5067e45d70deb0d3344b3091ba134f732cb894c1/driver/MonitorSplitDriver.cpp#L246-L253
+
+Telas (macOS)
+- Hardcodes two equal 0.5 fractions per selected external monitor, left/right or top/bottom based on physical orientation. No custom ratio, exact W/H, independent refresh, or three-screen editor in the inspected UI/source.
+- Each virtual mode's pixel size comes from its physical fraction; refresh comes from physical mode or 60 Hz fallback. Its menu selects monitors and split/join/identify actions. It is not a Windows alternative.
+Sources:
+https://github.com/eduardoworrel/telas/blob/79d753db28214afdc935ba544b6c4da43d099590/Sources/Telas.swift#L19-L36
+https://github.com/eduardoworrel/telas/blob/79d753db28214afdc935ba544b6c4da43d099590/Sources/Telas.swift#L61-L88
+https://github.com/eduardoworrel/telas/blob/79d753db28214afdc935ba544b6c4da43d099590/Sources/Telas.swift#L250-L261
+
+Plausible SplitDeck differentiation, requiring implementation/validation before claiming:
+1. A single editor combining per-screen aspect lock, independent render W/H, independent physical viewport bounds, and independent refresh/capture budget, including mixed-rate three-screen profiles.
+2. Native narrow portrait wings below DesktopSplitter's 640-pixel minimum, where supported by Windows/driver.
+3. Measured resource/latency and restoration quality on named real workloads/hardware. Do not infer lower latency, game parity, broad GPU support, or stronger safety from source inspection.
+
+Do not claim that three screens, editable per-screen resolution, independent virtual-display identity, window rescue, or high-refresh composition are unique. DesktopSplitter already implements much of that set. Do not claim independent refresh alone is unique: MonitorSplit exposes separate Hz controls, and DesktopSplitter's protocol already has per-mode refresh.

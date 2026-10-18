@@ -1,0 +1,30 @@
+GPU optimization and comparison plan - 18 October 2026
+
+User request: reduce overhead toward physical dual monitors, test with Chrome
+and Discord, and compare similar GitHub products.
+
+Evidence: v0.1.11 renders at 144 Hz even when captured desktop images do not
+change. Last trial copied 119/62 source images but presented 6521 frames. Whole
+GPU utilization was 4.8% baseline and 25.58% active; this includes other apps.
+
+Selected change: keep capture/cursor polling at target cadence, render on new
+source content or changed cursor state, and retain a one-second refresh. Retain
+all existing cursor fixes and restoration paths. A completed-loop counter must
+replace presentation count as the helper's liveness signal. A stuck capture or
+Present must still trip the watchdog. Idle skipped frames are reported explicitly.
+
+Alternatives: globally reducing refresh loses requested responsiveness; replacing
+the display driver is a larger unproven change and not necessary to avoid these
+duplicate draws. Neither is part of this patch.
+
+Validation: failing/passing policy regressions; existing native cursor/graphics
+and recovery suite; matched old/new Chrome static, animation, new tab, text input;
+Chrome plus real Discord when its window is open; restore and helper exit after
+each bounded trial. No personal Discord messages or calls are sent.
+
+Limits: a single physical monitor cannot provide a measured physical-dual-monitor
+baseline. Compare ordinary desktop and old/new split on this hardware. Desktop
+Duplication and final composition still add work. Low presentation FPS while
+idle is intentional and cannot be compared with old continuous-frame counts.
+Browser DevTools tests do not establish physical mouse latency. Separate process
+presence from proof that Discord was visible on a virtual screen.

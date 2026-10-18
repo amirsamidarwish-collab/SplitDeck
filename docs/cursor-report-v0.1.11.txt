@@ -1,0 +1,48 @@
+SplitDeck v0.1.11 EXPERIMENTAL - cursor boundary recovery
+18 October 2026
+
+OBSERVED CAUSE
+The user's v0.1.10 session kept presenting while the pointer escaped to
+(1480,-570) on the hidden physical desktop. Windows had expanded the cursor clip
+to include that physical output. The user confirmed mainly the pointer stopped.
+This evidence supports pointer escape, not a whole-PC rendering freeze.
+
+CHANGE
+The existing helper loop now checks the cursor boundary every 100 milliseconds.
+It repairs expanded/disjoint boundaries and returns escaped pointers to the
+nearest visible source pixel. It preserves valid narrower game clips and handles
+the portrait screen's eight-pixel height gap. Ordinary in-bounds motion causes no
+pointer writes. Failed queries cause no writes; failed repairs restore desktop.
+Activation also refuses to proceed if the original cursor state cannot be read.
+The v0.1.10 per-query CURSORINFO size initialization remains in place.
+
+VERIFICATION
+- 58/58 Windows checks and 11/11 Core checks passed; app builds with zero warnings.
+- Eight boundary regression groups cover released clips, exact escaped position,
+  narrower game clips, partial/disjoint clips, portrait gap, normal movement,
+  failed queries and failed writes. The agent observed failing tests before fix.
+- Live Chrome launch during split, then two new tabs on each virtual screen:
+  four cases completed, text input delivered, every case remained within ACTIVE.
+  The isolated Chrome profile was closed; normal desktop restored; helper exited.
+- Boundary repairs: 2. Position repairs: 0. Pointer remained at (960,540), in
+  visible source 1. This live trial exercised boundary repairs; escaped-position
+  recovery is covered by regression tests, not a physical mouse trial.
+- 143.75 presentations/second, no CPU readback, maximum recorded presentation
+  interval 27.71 ms, no intervals over 100 ms. No trial abort or operation error.
+- Independent review found an unchecked initial cursor snapshot; activation now
+  checks both reads before creating the recovery journal or changing topology.
+
+PERFORMANCE LIMITS
+Outcome remains NeedsReview, BudgetExceeded=true. System GPU utilization averaged
+4.8% baseline and 25.58% active, exceeding the overhead target. System CPU averaged
+24.02% baseline and 15.75% active with changing background activity; this is not
+negative application overhead. No claim of physical dual-monitor efficiency.
+Chrome tests used DevTools on an isolated test profile: they do not measure
+physical mouse input latency. Native desktop-control tooling remains unavailable.
+Long-session/game performance and animated cursor artwork remain unverified.
+Final packaging additionally checks original cursor reads before activation;
+that failure-path check was added after the live browser trial.
+
+USE
+Close older SplitDeck editors and run SplitDeck.exe from this v0.1.11 folder.
+Keep the folder together. Restore desktop or Ctrl+Alt+Shift+F12 ends the split.

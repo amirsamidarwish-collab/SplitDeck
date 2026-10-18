@@ -1,0 +1,70 @@
+SplitDeck v0.1.9 EXPERIMENTAL — activation after restart
+18 October 2026
+
+OBSERVED FAULTS
+v0.1.8 cleanup completed, but PnPUtil enable returned1167 for an owned root
+device. Native checks saw code22/disabled while PnPUtil called it disconnected.
+The verified class-installer fallback successfully enabled the devices.
+The first trial then exposed a separate topology assumption: enabling both
+devices did not attach both desktops. Live inventory subsequently confirmed the
+first owned adapter existed with Attached=false while the second was attached.
+Recovery's persisted detach can survive a driver disable/enable cycle.
+
+CHANGES
+- Narrow1167 fallback through SetupAPI DIF_PROPERTYCHANGE. Enable uses global
+  then current-profile scope; disable uses current-profile scope, following
+  Microsoft's DevCon pattern. Only exact owned devices with verified binding
+  and eligible native state may enter the fallback. It requires administrator
+  approval and preserves Windows restart flags. No driver package or signing
+  policy changed. No device was recreated or unrelated driver modified.
+- Successful state operations must reach native0/enabled or22/disabled within
+  a bounded wait. Utility success alone is insufficient. Disabled-state handling
+  also covers pair-upgrade cleanup and disconnect races.
+- Separate enumeration of inactive adapters. Preparation matches exact current
+  owned keys, checks advertised nonzero modes, and attaches only missing owned
+  outputs nonprimary beside an existing display. Missing/ambiguous identities
+  are never guessed; normal monitor detection remains attached-only.
+- Recovery remains armed before enable or attachment. Adapter inventory is
+  retained as a diagnostic sidecar; journals remain reserved for recovery.
+
+Sources for native API behavior:
+https://github.com/microsoft/Windows-driver-samples/blob/main/setup/devcon/cmds.cpp#L723-L813
+https://learn.microsoft.com/en-us/windows-hardware/drivers/install/dif-propertychange
+https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-enumdisplaydevicesw
+
+TESTS AND REVIEW
+Four transition and two attachment regression groups cover the new behavior;
+positive regressions were observed failing before their fixes. Full Windows
+runner without display:39/39passed. Core:11/11passed. Total run:50checks.
+Six native graphics/display checks were explicitly excluded for this lifecycle
+patch; their earlier v0.1.7 results are historical. Self-contained x64 build
+with warnings as errors:0warnings,0errors. Independent reviews cleared the
+native state and attachment paths, including the upgrade-cleanup correction.
+
+LIVE TRIALS — ALL RESULTS RETAINED
+1. Native-state fallback only: both devices enabled, but only one desktop
+   attached. Activation failed before ACTIVE. Recovery completed and the exact
+   physical desktop was restored. This was not a performance pass.
+2. With owned reattachment: both virtual screens activated and presented at
+   143.713fps, CPU readback0. Resource guard stopped the trial after two high
+   system-CPU samples. Baseline CPU22.08%, active86.30%; GPU3.2% to14.5%.
+   Largest recorded consumers included MsMpEng and NVIDIA Overlay/container
+   processes. Those process samples do not isolate the cause of all overhead.
+   Restoration and helper exit were both confirmed.
+3. Repeat, same build: DesktopBudgetPass. Both screens active, eight samples,
+   142.203presentations/sec at target144, continuous desktop CPU readback0.
+   Baseline CPU21.67%, active16.94%; GPU3.4% to13.625%. The first active CPU
+   sample still reached68.69%, followed by19.70% and lower samples. Background
+   activity changed, so lower average CPU does not imply negative app overhead.
+   No resource abort, no operation error, exact restoration and helper exit.
+
+CURRENT STATE AND LIMITS
+Only the LG2560x1080 at144Hz is attached, primary0,0. Driver readiness is true,
+no driver error, no incomplete journals. Editor/ordinary-close smoke exit0;
+screenshot inspected with v0.1.9 and Apply enabled. No further restart required
+by these completed trials. Close older editors and use the v0.1.9 executable.
+
+These are short idle-desktop trials. Presentation cadence is not game FPS.
+The first resource abort remains relevant; low overhead under games/Discord,
+physical dual-monitor equivalence, long sessions and native mouse latency
+are not established. Animated cursor artwork still uses its first frame.

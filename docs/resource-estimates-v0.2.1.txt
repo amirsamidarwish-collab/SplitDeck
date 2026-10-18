@@ -1,0 +1,25 @@
+SplitDeck v0.2.1 — realtime layout estimates
+
+GPU workload: sum(render width * render height * screen Hz) +
+physical width * physical height * highest active screen Hz.
+Fixed reference: twice physical pixels * detected physical Hz.
+This models relative source/output work, not actual GPU usage or hardware capacity.
+It does not predict app rendering cost, driver behavior, games or delivered FPS.
+
+Memory: (2 * total render pixels + 2 * physical pixels) * 4 BGRA bytes.
+This is an illustrative screen-buffer model, usually VRAM, not total RAM usage.
+Applications, driver/DWM allocations, cursor resources and CPU-fallback buffers
+are excluded. Hz alone does not change the buffer model. Bars fill at 1x native
+reference; larger values remain visible numerically, rather than implying safety.
+
+Valid TextChanged drafts recalculate locally without saving/applying. Invalid
+or unsupported modes clear the estimate, including after background readiness
+refreshes. All valid controls use LayoutEngine geometry before estimation.
+Names, inches, primary identity and ordering alone carry no modeled cost.
+
+Verification: Core24/24 passed. Real WPF smoke passed focused draft preservation,
+30-to-60Hz workload increase, unchanged memory, invalid-input clearing and
+unchanged draft profile. Build zero warnings/errors. Preview visually inspected.
+No driver/topology or GPU capture behavior changed for this feature; no split
+trial is needed to verify the pure estimates. The prior GPU performance target
+remains unmet; see the v0.2.0 report. No hardware percentage calibration is claimed.

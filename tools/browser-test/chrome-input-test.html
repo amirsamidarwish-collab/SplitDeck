@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>SplitDeck browser input test</title>
+<style>body{font:16px Segoe UI;background:#111914;color:#e9f1e9;margin:32px}h1{font-size:26px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px}.target{padding:25px;background:#263a2c;border:1px solid #83b755;border-radius:10px;color:inherit;font:inherit;text-align:center}input{box-sizing:border-box;background:#f5f9f2;color:#142017;padding:14px;width:100%;font:inherit}#dot{width:18px;height:18px;background:#c3f18b;border-radius:50%;margin:18px}pre{color:#b5c5b6}.spacer{height:600px}</style>
+<h1>SplitDeck: browser interaction check</h1><p>Local test only. Try the cursor zones, click targets, type, and scroll.</p>
+<div class="grid"><button id="arrow" class="target" style="cursor:default">Arrow</button><button id="hand" class="target" style="cursor:pointer">Link hand</button><button id="wait" class="target" style="cursor:wait">Wait</button><button id="progress" class="target" style="cursor:progress">Progress</button><button id="resize" class="target" style="cursor:ew-resize">Resize</button><label class="target" style="cursor:text">Text caret<input id="field" autocomplete="off" aria-label="Typing test"></label></div>
+<div id="dot"></div><pre id="status">Ready</pre><div class="spacer"></div><p>Scroll target reached.</p>
+<script>
+window.metrics={clicks:[],moves:0,gaps:[],phase:'idle'};let last=performance.now();
+document.addEventListener('click',e=>{metrics.clicks.push({id:e.target.id,at:performance.now(),trusted:e.isTrusted});statusText();});
+document.addEventListener('pointermove',()=>metrics.moves++);
+function statusText(){document.querySelector('#status').textContent=`Phase: ${metrics.phase}\nClicks: ${metrics.clicks.length}\nPointer events: ${metrics.moves}\nTyped: ${document.querySelector('#field').value}`;}
+document.querySelector('#field').addEventListener('input',statusText);
+function tick(t){metrics.gaps.push(t-last);if(metrics.gaps.length>2048)metrics.gaps.shift();last=t;document.querySelector('#dot').style.transform=`translateX(${90+Math.sin(t/500)*85}px)`;requestAnimationFrame(tick)}requestAnimationFrame(tick);
+window.resetMetrics=phase=>{metrics={clicks:[],moves:0,gaps:[],phase};document.querySelector('#field').value='';scrollTo(0,0);statusText()};
+window.results=()=>{let g=metrics.gaps.filter(x=>x>0),sorted=[...g].sort((a,b)=>a-b);return{phase:metrics.phase,clicks:metrics.clicks,moves:metrics.moves,typed:document.querySelector('#field').value,frames:g.length,averageFrameMs:g.length?g.reduce((a,b)=>a+b,0)/g.length:null,p95FrameMs:sorted[Math.floor(sorted.length*.95)]??null,maxFrameMs:g.length?Math.max(...g):null,scrollY,visible:document.visibilityState,devicePixelRatio,viewport:[innerWidth,innerHeight]}};
+</script>

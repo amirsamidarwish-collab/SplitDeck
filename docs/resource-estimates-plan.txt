@@ -1,0 +1,21 @@
+Approved design: realtime layout resource estimates (18 October 2026)
+GPU workload uses source render pixels per second plus full output pixels times
+the highest active virtual refresh target. Reference: native panel at its detected
+refresh, using the same formula. This is a relative workload index, not hardware
+utilization, an FPS guarantee, or a capacity/safety threshold.
+Memory model: two BGRA buffers per virtual source and two physical output buffers.
+Report MiB and a bar relative to the same native reference. This estimates screen
+buffer storage, usually VRAM; app RAM, game assets and driver/DWM allocations are
+excluded. Refresh alone does not change this memory model.
+All valid layout options flow through LayoutEngine; only calculated pixels and
+Hz influence demand. Names/inches/primary/order alone have no resource cost.
+Valid numeric drafts update estimates while typing, without saving or applying.
+Invalid drafts clear estimates rather than leaving stale values.
+
+Plan:
+1. Add pure Core estimator and meaningful failing refresh/resolution tests.
+2. Implement fixed-reference estimates with no hardware queries or timers.
+3. Add two bars above layout preview, values, assumptions and invalid state.
+4. Connect TextChanged to draft-only calculation, preserving edit/caret state.
+5. Run Core checks, WPF draft regression, build and inspect preview.
+6. Package v0.2.1 separately; preserve v0.2.0. No live topology change needed.

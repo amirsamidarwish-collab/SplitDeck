@@ -1,0 +1,34 @@
+Approved design - 18 October 2026
+
+Two or three independent, non-overlapping screen regions on one panel. Each has
+name, ratio lock/custom ratio, orientation, visible width/height, exact virtual
+render width/height and refresh. Auto sizing remains available. Visible pixels
+and rendered pixels are distinct; scaling is shown explicitly. Ratios constrain
+visible geometry; conflicting explicit dimensions are rejected with a clear
+message, never silently stretched. Native rendering remains the default.
+
+Horizontal ordered columns, vertically centered visible rectangles, no overlap.
+An explicit visible size reserves its width; automatic regions share remaining
+width. The three-screen preset is portrait / 16:9 landscape / portrait, with
+the center primary. Users may select any region as primary, reorder regions,
+switch between two/three screens, and edit every region. Default preset targets
+60 Hz center and 30 Hz wings; existing profiles retain their settings.
+
+Backward compatibility: preserve the existing First/Second/FirstShare/Priority
+JSON constructor and add optional trailing Third, SecondShare, PrimaryIndex.
+ScreenSettings gains optional trailing VisibleWidth/VisibleHeight/RenderWidth/
+RenderHeight fields (zero means auto). Validation accepts 2/3 screens only.
+Old two-screen profiles and recovery journals continue to load.
+
+One managed signed driver device per active virtual screen, with bounded upgrade
+from two to three owned devices. Never touch unrelated driver devices. Preserve
+ownership and recovery metadata; enable only requested count, disable all owned
+devices during restore. Existing compositor/cursor/window-rescue collections are
+generalized where needed. Primary source is explicit, independent of left-to-right
+geometry. Always retain the physical presentation output and emergency restore.
+
+Validation: geometry/ratio/exact-pixel/old-profile tests; driver count and ownership
+failure recovery; editor preview; native compositor and cursor tests; bounded live
+two- and three-screen trials including Chrome/Discord and normal restoration.
+Measured performance limitations are reported honestly; no near-zero-overhead
+or unique-feature claim without evidence.

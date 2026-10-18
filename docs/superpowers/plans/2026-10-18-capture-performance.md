@@ -1,0 +1,16 @@
+# Capture performance repair
+
+**Goal:** Remove synchronous GPU-to-CPU-to-GPU round trips for compatible outputs and bound fallback work so applying a split cannot request full-frame CPU readbacks at 144 Hz.
+
+**Observed:** User reports severe desktop slowdown with 1920x1080 at 144 Hz plus 603x1072 at 30 Hz. The session restored cleanly. Current capture maps staging memory immediately after every GPU copy, including pointer-only updates. Presentation uploads those CPU buffers again. This is a likely rendering bottleneck; inactive process samples cannot establish live CPU/GPU saturation.
+
+**Approach:** Keep the existing driver/session/recovery architecture. Add a synchronous nonblocking GPU duplication source owned by the presentation thread and its D3D11 device; copy captured images into shader-readable GPU textures, never CPU-map them. Construct the presenter device for the physical output's adapter. Try the same-device path for every source. For incompatible outputs, retain a deliberately bounded CPU fallback with a staging ring and DoNotWait maps, skip pointer-only updates, and limit readback cadence/bandwidth. Expose path/traffic counts in diagnostics and live status. Keep per-screen virtual modes unchanged and keep direct Apply, emergency restore, watchdog, and crash recovery.
+
+- [x] Add GPU-only native marker-pixel capture and bounded fallback scheduling tests; preserve existing graphics/recovery tests. Cadence, resource guard, cancellation, and telemetry regressions observed failing before fixes.
+- [x] Implement direct capture and a nonblocking, rate-limited fallback. Integrate unique source selection and render pacing. Record which sources require fallback.
+- [x] Compare a read-only physical presentation benchmark with v0.1.4, verify rendered pixels, run warnings-as-errors builds/tests, and review the diff. Awake-monitor full run 21/21 Windows, 11/11 Core; both rendered images verified. Physical smoke CPU 2750 ms reference versus 750 ms candidate, with differing frame counts; no gaming equivalence claimed.
+- [x] Package v0.1.5 using immutable dependency links, independent app binaries, and clear actual-path diagnostics. Packaged diagnostics exit 0; source archive verified. Candidate remains pending live graphics/performance validation. Latest user explicitly authorizes low-impact performance tests: use only the bounded resource-guarded trial after physical capture preflight succeeds, with automatic restoration and verified helper exit/journal/topology. Never run an unbounded Apply as a performance test.
+
+Earlier block resolved: user confirmed the monitor was asleep and woke it. LG identification and physical frames returned, including the marker pixel and inspected desktop images. Bounded active-split trial requested and awaiting Windows elevation; no valid active-split hardware measurements exist yet.
+
+Review: read-only reviewer approved the final code after cadence, snapshot readiness, helper-exit confirmation, fresh/all-adapter GPU telemetry, and telemetry journal-isolation corrections. Verification: 11/11 Core; 21/21 Windows including native graphics. Final app self-contained warnings-as-errors build: zero warnings/errors. No active topology trial performed yet.

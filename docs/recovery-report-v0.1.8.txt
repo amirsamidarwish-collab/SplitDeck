@@ -1,0 +1,31 @@
+SplitDeck v0.1.8 — post-restart recovery fix
+18 October 2026
+
+The user restarted Windows at14:02. Both owned virtual devices now reported
+native problem code22 (disabled), but recovery called pnputil /disable-device
+again. Windows returned1167, device not connected, for each already-disabled
+instance. The old code retained an incomplete journal and blocked Apply.
+
+Fix: skip disable when native state already confirms22. If state changes
+during a disable call, accept1167 only after a fresh native code22 check.
+Missing/unknown/active devices, other errors and restart results still fail.
+Every remaining device is attempted after an error.
+
+Two new regression groups were observed failing before the implementation,
+then passing. Focused driver-disable groups3/3. Windows Release checks33/33
+passed with six graphics/display checks explicitly excluded (unchanged renderer
+was tested in v0.1.7). Core11/11 passed. Total checks run for this patch44/44.
+Self-contained x64 app build with warnings as errors:0warnings,0errors.
+Independent read-only review approved the focused change.
+
+Real recovery with the new executable: exit0. Original pending journal is
+Complete=true, RestartRequired=false. Restart marker removed. Inventory found
+no incomplete journals. Both managed devices remain disabled, code22.
+Read-only diagnostics: managed driver ready, no driver error, only physical LG
+2560x1080 at144Hz, primary0,0. Editor/ordinary-close smoke exit0; screenshot
+inspected, v0.1.8 and enabled Apply visible.
+
+The recovery blocker is resolved on this PC. Another restart is not needed
+for this error. Close v0.1.7 and open v0.1.8. No new virtual split or game test
+was performed in this patch; cursor latency and game overhead remain unproven.
+The earlier v0.1.7 bug report remains historical evidence.

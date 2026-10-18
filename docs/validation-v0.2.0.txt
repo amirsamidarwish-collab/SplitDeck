@@ -1,0 +1,110 @@
+SplitDeck v0.2.0 EXPERIMENTAL — 18 October 2026
+
+STATUS
+Three-screen activation and restoration passed a live Chrome + Discord trial.
+User confirmed all three regions, Discord and the pointer worked.
+GPU parity with two physical monitors has NOT been achieved or demonstrated.
+The packaged partial-copy build completed its live retry after administrator
+approval. Nominal pixel-copy volume fell 41.2% against full copies of the same
+acquired frames. Whole-GPU utilization remained25.5%; the performance target
+is still unmet. User confirmed Chrome and Discord were visible and usable and the pointer
+responded normally; automated Chrome phases completed.
+
+FEATURES
+Two or three independent Windows displays presented on one physical panel.
+Portrait / 16:9 center / portrait preset, center primary; editable screen order
+and primary selection. Each screen has aspect/orientation, exact visible W/H,
+exact render W/H and refresh controls. Zero dimensions mean automatic.
+Invalid ratios, overlap/overflow and dimensions that cannot fit are rejected.
+Narrow app regions may be smaller than an application's minimum window width.
+Old two-screen profiles remain supported. Three owned devices are retained when
+using two screens; the unused device stays disabled. Use v0.2.0 or newer after
+three-device setup because older builds only understand two owned devices.
+
+FIXES
+Physical display group stays connected above virtual sources, preventing Windows
+from rearranging the left portrait below the center. Actual positions, modes,
+refresh and primary are checked before presentation; requested/actual topology
+diagnostics are retained. Activation errors no longer falsely imply failed
+restoration when the helper has confirmed RESTORED.
+Background readiness checks preserve focused editor drafts and caret selection.
+Exact render mode clears the previous render-detail preset.
+
+GPU CHANGE — COPY VOLUME REDUCED; OVERALL TARGET UNMET
+Fresh frames copy dirty rectangles and moved destination rectangles from the
+current acquired image. Bounded to 64 rectangles and 60% nominal pixel coverage;
+otherwise a full copy is used. Startup, resize, capture recovery, rotation,
+missing/invalid/truncated metadata and invalid rectangles also use full copies.
+No render resolution, virtual refresh or physical refresh reduction is enabled
+by this change. No CPU readback or blocking query wait was added.
+Telemetry reports submitted pixel-copy bytes, not measured hardware bus traffic.
+
+VERIFICATION
+Release app/build: zero warnings/errors. Core21/21; Windows86/86.
+Ten native WARP byte-equivalence fixtures verify dirty updates, overlapping moves,
+dirty-over-move and full-copy fallback cases. Focused copy-policy checks passed.
+Real WPF input smoke passed five focused draft fields, caret preservation and
+Exact-mode clearing. Saved user profile remained unchanged by the smoke.
+Final editor preview inspected. Final read-only diagnosis: only LG2560x1080@144
+active, three managed IDs present, no driver error, no display mutation.
+
+MEASURED LIVE TRIALS (before partial-copy integration)
+1. Two screens, physical144Hz, virtual60/60:
+   GPU26.45%, baseline6.6%; CPU15.94%; polls59.91/s.
+   Chrome static/animation/new-tab/typing completed, typing verified.
+   Restore/helper exit confirmed, no operation error or resource abort.
+2. Same requested virtual modes, diagnostic physical60Hz:
+   GPU25.55%, baseline6.8%; CPU13.20%; polls59.99/s.
+   Windows compositor 3D engine10.92% ->1.31%, helper3.14% ->5.00%.
+   These engine counters differ from whole-GPU telemetry. This comparison does
+   not establish a substantial whole-GPU improvement. Physical144Hz restored.
+   OutputRefreshHz remains diagnostic-only; normal editor preserves panel rate.
+3. Three-screen retry:
+   Left486x864@30, center1584x891@60, right486x864@30, physical144Hz.
+   Exact Windows topology verified, center primary, negative-X left region.
+   Chrome moved/typed on all three and completed static/animation/new-tab phases.
+   User confirmed all regions, Discord and pointer worked. Restore/helper exit
+   confirmed, no error/abort. GPU27.51%, CPU31.81%; different geometry/workload,
+   so this is not a paired performance comparison with the two-screen trial.
+   Chrome minimum width516 exceeds the486-wide wings and can cross a boundary.
+4. Packaged v0.2.0 partial-copy retry, physical144Hz, virtual60/60:
+   GPU25.5%, baseline2.6%; CPU13.16%; polls60.02/s.
+   Chrome static/animation/new-tab/typing complete;603 animation callbacks.
+   Nominal copy bytes 7,699,107,664 versus 13,096,612,800 for full copies of those
+   same frames: 41.21% less. This is submitted copy volume,
+   not a measurement of total GPU bandwidth or lost gaming performance.
+   Partial copies1223, full copies1141; full copies were startup/high coverage.
+   No invalid/missing metadata or rotation fallbacks occurred.
+   DWM3D10.81%, helper3D2.91%; these differ from whole-GPU utilization.
+   Restored=true, HelperExited=true; no Error/Abort. Existing windows3/3 moved.
+   The earlier26.45% reference had a different baseline6.6% and ran earlier;
+   this single repeat does not establish a reliable whole-GPU speedup.
+All valid trials still exceeded the performance budget.
+
+FAILED/INCOMPLETE ATTEMPTS RETAINED
+First three-screen attempt correctly rejected Windows' relocated left screen;
+final recovery was confirmed. Earlier journal disk-full and CPU-guard attempts
+are not usable comparisons. The first optimized attempt never reached ACTIVE
+because administrator approval was canceled; its retry completed as recorded above.
+No performance guard was loosened. Normal desktop is restored.
+
+COMPETITORS
+See docs/competitor-controls-2026-10-18.txt for pinned GitHub source links.
+DesktopSplitter already offers 2–4 screens, exact per-segment dimensions and a
+center-with-portrait-wings preset. MonitorSplit exposes separate refresh inputs.
+Those features alone are not unique. SplitDeck's plausible distinction is the
+combination of aspect locks, independent visible/render dimensions, per-screen
+refresh and narrow native portrait regions. Competitors were not installed or
+benchmarked; source inspection does not establish runtime reliability or speed.
+
+LIMITS / NEXT REQUIRED CHECK
+Continue investigating total GPU cost; the completed partial-copy retry reduced
+copy volume but did not establish near-physical-monitor GPU overhead.
+No physical dual-monitor baseline, gaming FPS/latency or long-session test.
+Chrome automation used its isolated DevTools profile. Native mouse usability was
+confirmed by the user, not automated. Near-zero overhead is not established.
+
+USE
+Run SplitDeck.exe from the complete v0.2.0 folder. Select count/preset, edit
+dimensions, Setup driver if needed, then Apply. Restore desktop or
+Ctrl+Alt+Shift+F12 ends the session. Closing the editor also restores it.

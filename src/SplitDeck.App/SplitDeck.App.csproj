@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <StartupObject>SplitDeck.App.Program</StartupObject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>SplitDeck</AssemblyName>
+    <Version>0.2.2</Version>
+    <Product>SplitDeck</Product>
+    <Description>Experimental virtual-monitor layout editor and presenter for Windows.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SplitDeck.Core\SplitDeck.Core.csproj" />
+    <ProjectReference Include="..\SplitDeck.Windows\SplitDeck.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\assets\driver\**\*" Link="assets\driver\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
