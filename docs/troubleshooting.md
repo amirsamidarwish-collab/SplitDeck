@@ -4,7 +4,7 @@ If the desktop becomes slow or the cursor stops responding normally, restore bef
 
 ## The download has no executable
 
-Use `SplitDeck-0.2.2-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). GitHub's source-code ZIP contains source files. Extract the complete portable ZIP before opening `SplitDeck.exe`; moving only the executable leaves out its runtime and driver assets.
+Use `SplitDeck-0.2.3-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). GitHub's source-code ZIP contains source files. Extract the complete portable ZIP before opening `SplitDeck.exe`; moving only the executable leaves out its runtime and driver assets.
 
 ## Setup does nothing or Apply is disabled
 
@@ -38,7 +38,7 @@ Select the app and try Windows+Shift+Left/Right Arrow to move it to another outp
 
 Restore and compare with the normal desktop before continuing. Rendering apps, the virtual driver, desktop capture and Windows composition all contribute to the load.
 
-The latest 120/30 Hz comparison measured 29.62% total GPU utilization with normal presentation and 26.81% with diagnostic immediate presentation. Their pre-split baselines differed, CPU use increased and power use was not consistently lower. Normal presentation remains the default. The [performance report](performance-v0.2.2.md) includes the conditions and earlier 60/60 Hz results. These tests do not measure lost game FPS. Near-physical-monitor overhead has not been achieved, and no gaming-performance guarantee is available.
+The latest 120/30 Hz comparison measured 29.62% total GPU utilization with normal presentation and 26.81% with diagnostic immediate presentation. Their pre-split baselines differed, CPU use increased and power use was not consistently lower. Normal presentation remains the default. The [performance report](performance-v0.2.3.md) includes the conditions and earlier 60/60 Hz results. These tests do not measure lost game FPS. Near-physical-monitor overhead has not been achieved, and no gaming-performance guarantee is available.
 
 Match render resolution to visible pixels to avoid extra detail being downsampled. Lowering a virtual refresh target is an available user choice, but it also reduces that source's update target. The resource bars are estimates of layout demand, not a measurement of actual GPU usage or RAM capacity.
 

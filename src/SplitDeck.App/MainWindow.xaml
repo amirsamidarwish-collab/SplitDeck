@@ -38,7 +38,7 @@
       <DockPanel Margin="25,0" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
           <Grid Width="28" Height="25" Margin="0,0,10,0"><Grid.ColumnDefinitions><ColumnDefinition Width="16"/><ColumnDefinition Width="4"/><ColumnDefinition Width="8"/></Grid.ColumnDefinitions><Border Grid.Column="0" Background="#C3F18B" CornerRadius="3"/><Border Grid.Column="2" Background="#EDF3E9" CornerRadius="3"/></Grid>
-          <TextBlock Text="SplitDeck - EXPERIMENTAL v0.2.2" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="SplitDeck - EXPERIMENTAL v0.2.3" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
           <TextBlock Text="LOCAL DISPLAY EDITOR" Foreground="{StaticResource Muted}" FontSize="10" FontWeight="SemiBold" Margin="24,3,0,0" VerticalAlignment="Center"/>
         </StackPanel>
       </DockPanel>
@@ -58,6 +58,7 @@
             <Button x:Name="PortraitButton" Content="Game + portrait" Click="PortraitButton_Click" Style="{StaticResource ButtonStyle}" Margin="0,0,8,0"/>
             <Button Content="Reverse order" Click="SwapButton_Click" Style="{StaticResource ButtonStyle}"/>
           </WrapPanel>
+          <TextBlock x:Name="DividerHint" Visibility="Collapsed" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,0,0,10"/>
           <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,12">
             <StackPanel>
               <TextBlock Text="Estimated layout demand" FontWeight="SemiBold" Margin="0,0,0,9"/>
@@ -75,6 +76,10 @@
                 <Border x:Name="PreviewOne" Background="#293B27" BorderBrush="#C3F18B" BorderThickness="2" CornerRadius="4" MouseLeftButtonDown="PreviewOne_Click"><StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock Text="1" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewOneName" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewOneDims" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/></StackPanel></Border>
                 <Border x:Name="PreviewTwo" Background="#2C303B" BorderBrush="#55615A" BorderThickness="2" CornerRadius="4" MouseLeftButtonDown="PreviewTwo_Click"><StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock Text="2" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewTwoName" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewTwoDims" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/></StackPanel></Border>
                 <Border x:Name="PreviewThree" Background="#3B3035" BorderBrush="#55615A" BorderThickness="2" CornerRadius="4" MouseLeftButtonDown="PreviewThree_Click" Visibility="Collapsed"><StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock Text="3" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewThreeName" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/><TextBlock x:Name="PreviewThreeDims" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/></StackPanel></Border>
+                <Thumb x:Name="LeftDivider" Visibility="Collapsed" Width="16" Cursor="SizeWE" Focusable="True" Panel.ZIndex="100" DragStarted="Divider_Started" DragDelta="Divider_Delta" DragCompleted="Divider_Completed" KeyDown="Divider_KeyDown">
+                  <Thumb.Template><ControlTemplate TargetType="Thumb"><Grid Background="Transparent"><Border Width="2" Background="#C3F18B"/><Border Width="14" Height="36" CornerRadius="5" Background="#C3F18B" VerticalAlignment="Center"><TextBlock Text="⋮" FontSize="22" Foreground="#213315" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></Grid></ControlTemplate></Thumb.Template>
+                </Thumb>
+                <Thumb x:Name="RightDivider" Visibility="Collapsed" Width="16" Cursor="SizeWE" Focusable="True" Panel.ZIndex="100" DragStarted="Divider_Started" DragDelta="Divider_Delta" DragCompleted="Divider_Completed" KeyDown="Divider_KeyDown" Template="{Binding Template,ElementName=LeftDivider}"/>
               </Canvas></Viewbox>
               <DockPanel Grid.Row="1" Margin="0,9,0,0"><TextBlock x:Name="SizeLabel" Foreground="{StaticResource Muted}"/><TextBlock Text="Shaded area = unused physical pixels" Foreground="{StaticResource Muted}" DockPanel.Dock="Right" HorizontalAlignment="Right"/></DockPanel>
             </Grid>

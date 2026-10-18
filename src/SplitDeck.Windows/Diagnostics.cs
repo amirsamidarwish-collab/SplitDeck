@@ -42,7 +42,7 @@ public static class Diagnostics
   var outputs=new List<object>();using(var factory=DXGI.CreateDXGIFactory1<IDXGIFactory1>()){
    for(uint a=0;factory.EnumAdapters1(a,out var adapter).Success;a++)using(adapter){for(uint o=0;adapter.EnumOutputs(o,out var output).Success;o++)using(output){var d=output.Description;outputs.Add(new{Adapter=adapter.Description1.Description,d.DeviceName,AttachedToDesktop=(bool)d.AttachedToDesktop,d.DesktopCoordinates.Left,d.DesktopCoordinates.Top,d.DesktopCoordinates.Right,d.DesktopCoordinates.Bottom});}}
   }
-  await File.WriteAllTextAsync(path,JsonSerializer.Serialize(new{Version="0.2.2-experimental",Windows=Environment.OSVersion.VersionString,monitors,DxgiOutputs=outputs,ManagedDriverInstalled=installed,ManagedDeviceIds=DriverInstallation.OwnedDeviceIds,DriverError=driverError,MutatedDisplaySettings=false},new JsonSerializerOptions{WriteIndented=true}));
+  await File.WriteAllTextAsync(path,JsonSerializer.Serialize(new{Version="0.2.3-experimental",Windows=Environment.OSVersion.VersionString,monitors,DxgiOutputs=outputs,ManagedDriverInstalled=installed,ManagedDeviceIds=DriverInstallation.OwnedDeviceIds,DriverError=driverError,MutatedDisplaySettings=false},new JsonSerializerOptions{WriteIndented=true}));
  }
  public static async Task SmokePresentationAsync(string report)
  {

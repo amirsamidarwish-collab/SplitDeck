@@ -1,0 +1,13 @@
+Three-screen divider resizing
+User requested dragging because percentage entry is hard to size.
+Add two visible, wide-hit-area Thumb handles over the preview's column boundaries.
+Dragging a boundary transfers space between its neighbors; the other screen's
+share stays fixed. Clamp shares to at least1%, preserve ratios, render dimensions,
+refresh, order and primary. Preview and resource estimates update during drag;
+save once on release. Cancel restores the pre-drag profile. Editing changes no
+Windows topology. Exact visible sizes lock both handles with an explanation.
+Keep percentage fields for precision and show live shares beside the preview.
+
+Verification: regression-first pure share math and clamping checks; WPF own-preview
+drag events for both handles, cancellation, exact-size locks and live estimates.
+Inspect screenshot, build candidate, package separately, commit/push and release.

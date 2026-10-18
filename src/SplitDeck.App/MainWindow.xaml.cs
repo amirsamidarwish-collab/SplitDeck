@@ -205,6 +205,7 @@ public partial class MainWindow : Window
         PreviewOne.Visibility = Visibility.Collapsed;
         PreviewTwo.Visibility = Visibility.Collapsed;
         PreviewThree.Visibility = Visibility.Collapsed;
+        LeftDivider.Visibility=RightDivider.Visibility=DividerHint.Visibility=Visibility.Collapsed;
         if (_monitor is null)
         {
             MonitorMeta.Text = "No selectable physical display";
@@ -229,6 +230,7 @@ public partial class MainWindow : Window
             var panelH = _monitor.Height * scale;
             var offsetX = (720 - panelW) / 2;
             var offsetY = (260 - panelH) / 2;
+            PlaceDividers(offsetX,offsetY,panelW,panelH);
             PreviewCanvas.Children.OfType<Rectangle>().ToList().ForEach(r => PreviewCanvas.Children.Remove(r));
             var outline = new Rectangle { Width = panelW, Height = panelH,
                 Stroke = (Brush)Resources["Line"], StrokeThickness = 2, Fill = new SolidColorBrush(Color.FromRgb(15, 21, 16)) };

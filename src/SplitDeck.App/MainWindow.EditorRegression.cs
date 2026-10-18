@@ -29,6 +29,25 @@ public partial class MainWindow
         ExactRefreshInput.Text="999999";if(DemandGpuBar.Value!=0)throw new InvalidOperationException("Unsupported refresh retained old estimate.");
         RenderWidthInput.Text="oops";if(DemandGpuBar.Value!=0)throw new InvalidOperationException("Invalid input retained old estimate.");
         _updating=true;_profile=Presets.Triple(Math.Min(60,PanelLimit));_selected=1;_updating=false;Render();
-        return new{Result="PASS",FocusedDraftFields=fields.Length,DraftSelectionPreserved=true,ExactModeClearsPreset=true,LiveDemandDrafts=true,InvalidDemandCleared=true,ProfilePersistenceDisabled=true,DriverActionsDisabled=true,MutatedDisplaySettings=false};
+        VerifyDividerDragging();
+        return new{Result="PASS",FocusedDraftFields=fields.Length,DraftSelectionPreserved=true,ExactModeClearsPreset=true,LiveDemandDrafts=true,InvalidDemandCleared=true,DividerDragging=true,DividerCancellation=true,ExactVisibleLocks=true,ProfilePersistenceDisabled=true,DriverActionsDisabled=true,MutatedDisplaySettings=false};
+    }
+
+    private void VerifyDividerDragging()
+    {
+        var original=_profile;
+        if(!LeftDivider.IsEnabled||!RightDivider.IsEnabled||LeftDivider.Visibility!=System.Windows.Visibility.Visible)throw new InvalidOperationException("Three-screen drag handles are unavailable.");
+        var before=DemandMemoryValue.Text;
+        static void Start(System.Windows.Controls.Primitives.Thumb t)=>t.RaiseEvent(new System.Windows.Controls.Primitives.DragStartedEventArgs(0,0){RoutedEvent=System.Windows.Controls.Primitives.Thumb.DragStartedEvent});
+        static void Drag(System.Windows.Controls.Primitives.Thumb t,double delta)=>t.RaiseEvent(new System.Windows.Controls.Primitives.DragDeltaEventArgs(delta,0){RoutedEvent=System.Windows.Controls.Primitives.Thumb.DragDeltaEvent});
+        static void End(System.Windows.Controls.Primitives.Thumb t,bool cancel)=>t.RaiseEvent(new System.Windows.Controls.Primitives.DragCompletedEventArgs(0,0,cancel){RoutedEvent=System.Windows.Controls.Primitives.Thumb.DragCompletedEvent});
+        Start(LeftDivider);Drag(LeftDivider,_dividerPanelWidth*.10);
+        if(_profile.FirstShare!=29||_profile.SecondShare!=52||DemandMemoryValue.Text==before)throw new InvalidOperationException("Left divider did not update its neighbors and live estimates.");
+        End(LeftDivider,false);Start(RightDivider);Drag(RightDivider,-_dividerPanelWidth*.05);
+        if(_profile.FirstShare!=29||_profile.SecondShare!=47)throw new InvalidOperationException("Right divider changed the wrong shares.");
+        End(RightDivider,true);if(_profile.FirstShare!=29||_profile.SecondShare!=52)throw new InvalidOperationException("Canceled drag did not restore its initial layout.");
+        _profile=original with{First=original.First with{VisibleWidth=486}};Render();if(LeftDivider.IsEnabled||RightDivider.IsEnabled)throw new InvalidOperationException("Exact visible sizes must lock automatic dividers.");
+        _profile=Presets.Balanced(PanelLimit);Render();if(LeftDivider.Visibility!=System.Windows.Visibility.Collapsed||RightDivider.Visibility!=System.Windows.Visibility.Collapsed)throw new InvalidOperationException("Triple dividers leaked into two-screen layout.");
+        _profile=original;Render();
     }
 }

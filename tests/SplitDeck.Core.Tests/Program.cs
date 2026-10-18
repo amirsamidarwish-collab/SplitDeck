@@ -2,6 +2,8 @@ using SplitDeck.Core;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("divider dragging transfers only neighboring shares and preserves screen settings", DividerNeighbors),
+    ("divider dragging clamps each region and rejects invalid movement", DividerLimits),
     ("layout demand rises with refresh while buffer memory stays fixed", DemandRefresh),
     ("layout demand rises with render resolution and handles three screens", DemandResolution),
     ("layout demand rejects invalid input and preserves fixed reference", DemandValidation),
@@ -254,4 +256,16 @@ static void DemandValidation(){
  VirtualScreenLayout[] s=[new(0,"A",new(0,0,1280,1080),1280,1080,60),new(1,"B",new(1280,0,1280,1080),1280,1080,60)];
  Throws(()=>LayoutDemandEstimator.Estimate(s,0,1080,144));Throws(()=>LayoutDemandEstimator.Estimate(s,2560,1080,double.NaN));Throws(()=>LayoutDemandEstimator.Estimate([s[0] with{RefreshHz=0},s[1]],2560,1080,144));Throws(()=>LayoutDemandEstimator.Estimate([],2560,1080,144));
  var a=LayoutDemandEstimator.Estimate(s,2560,1080,144);if(Math.Abs(a.BufferRatio-1)>1e-9||a.WorkloadRatio>=1)throw new Exception("Reference must stay fixed while changing refresh.");
+}
+
+static void DividerNeighbors(){
+ var p=Presets.Triple(144);var left=ColumnResize.Move(p,0,10);Eq(29,left.FirstShare);Eq(52,left.SecondShare);Eq(19,100-left.FirstShare-left.SecondShare);
+ var right=ColumnResize.Move(p,1,10);Eq(19,right.FirstShare);Eq(72,right.SecondShare);Eq(9,100-right.FirstShare-right.SecondShare);
+ if(left.First!=p.First||left.Second!=p.Second||left.Third!=p.Third||left.PrimaryIndex!=p.PrimaryIndex||left.OutputRefreshHz!=p.OutputRefreshHz)throw new Exception("Dragging must preserve per-screen configuration and primary.");
+ Eq(20,ColumnResize.Move(p,0,.6).FirstShare);Eq(19,ColumnResize.Move(p,0,.4).FirstShare);
+}
+static void DividerLimits(){
+ var p=Presets.Triple(144);var a=ColumnResize.Move(p,0,-10000);Eq(1,a.FirstShare);Eq(80,a.SecondShare);var b=ColumnResize.Move(p,1,10000);Eq(80,b.SecondShare);Eq(1,100-b.FirstShare-b.SecondShare);
+ Throws(()=>ColumnResize.Move(p,2,5));Throws(()=>ColumnResize.Move(p,0,double.NaN));Throws(()=>ColumnResize.Move(Presets.Balanced(144),0,5));
+ foreach(int index in new[]{0,1})foreach(double delta in new[]{-100d,-50d,0d,50d,100d}){var x=ColumnResize.Move(p,index,delta);if(x.FirstShare<1||x.SecondShare<1||x.FirstShare+x.SecondShare>=100)throw new Exception("Invalid share after drag.");LayoutEngine.Calculate(x,2560,1080,144);}
 }
