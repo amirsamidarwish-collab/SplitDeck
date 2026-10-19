@@ -56,7 +56,7 @@ public static class PerformanceProbe
   }else for(int i=0;i<5;i++)baseline.Add(await MeasureAsync());
   double baselineCpu=baseline.Average(x=>x.CpuPercent);double? baselineGpu=MeanGpu(baseline);
   if(baselineCpu>75||baseline.Last().AvailableMiB<1024){await File.WriteAllTextAsync(report,JsonSerializer.Serialize(new{Outcome="NotRun",Reason="The baseline is already busy or memory is low. Close other heavy work before testing.",Baseline=baseline,TopologyChanged=false},Json));return 2;}
-  await using var session=new SessionController();var active=new List<Sample>();var captureTimeline=new List<JsonElement>();string? error=null,abort=null;bool restored=false,helperExited=false,budgetExceeded=false;JsonElement? captureStats=null,initialStats=null;int violations=0;DateTime? activeStartedUtc=null,activeEndedUtc=null;
+  await using var session=new SessionController(retainDiagnostics:true);var active=new List<Sample>();var captureTimeline=new List<JsonElement>();string? error=null,abort=null;bool restored=false,helperExited=false,budgetExceeded=false;JsonElement? captureStats=null,initialStats=null;int violations=0;DateTime? activeStartedUtc=null,activeEndedUtc=null;
   try{
    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(25));await session.ApplyAsync(physical,profile,startup.Token);
    activeStartedUtc=DateTime.UtcNow;

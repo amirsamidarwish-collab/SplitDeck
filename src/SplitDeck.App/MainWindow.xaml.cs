@@ -14,8 +14,6 @@ namespace SplitDeck.App;
 public partial class MainWindow : Window
 {
     private readonly SessionController _session = new();
-    private readonly ProfileStore _store = new(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SplitDeck"));
     private readonly Dictionary<string, double> _manualSizes = new(StringComparer.OrdinalIgnoreCase);
     private LayoutProfile _profile = Presets.Balanced(60);
     private IReadOnlyList<VirtualScreenLayout>? _layout;
@@ -29,6 +27,7 @@ public partial class MainWindow : Window
     private RecoveryTray? _tray;
     private readonly bool _previewOnly;
     private int _readinessCount=2;
+    private bool _canRecoverOffscreen;
 
     public MainWindow():this(null){}
     public MainWindow(LayoutProfile? previewProfile)
@@ -40,20 +39,19 @@ public partial class MainWindow : Window
         _updating = false;
         _session.StatusChanged += OnSessionStatus;
         _session.SessionEnded += OnSessionEnded;
-        Loaded += async (_, _) => await RefreshDriverReadiness();
+        Loaded += async (_, _) => {
+            await RefreshDriverReadiness();
+            if(!_previewOnly&&_canRecoverOffscreen&&!_busy&&!_session.IsActive){
+                _busy=true;Render(preserveDrafts:true);
+                try{int moved=await DisplayService.RecoverOffscreenWindowsAsync();if(moved>0)StatusDetail.Text=$"Returned {moved} offscreen app window(s) to the desktop.";}
+                catch(Exception error)when(error is IOException or InvalidOperationException or System.ComponentModel.Win32Exception){ErrorText.Text="Some offscreen windows could not be recovered: "+error.Message;}
+                finally{_busy=false;Render(preserveDrafts:true);}
+            }
+        };
         _tray=new RecoveryTray(()=>Dispatcher.BeginInvoke(async()=>{await RunOperation(async()=>{await _session.RestoreAsync();Show();WindowState=WindowState.Normal;Activate();});}));
-        try
-        {
-            var loaded = previewProfile??_store.Load();
-            if (loaded is not null) _profile = loaded;
-            else if (File.Exists(Path.Combine(Environment.GetFolderPath(
-                         Environment.SpecialFolder.LocalApplicationData), "SplitDeck", "profile.json")))
-                ErrorText.Text = "Saved profile was invalid. A balanced profile is shown instead.";
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            ErrorText.Text = $"Could not load saved profile: {ex.Message}";
-        }
+        // A fresh editor starts at native render density. Transfer an edited
+        // layout explicitly only for preview diagnostics or the UAC handoff.
+        _profile=previewProfile??Presets.Balanced(60);
 
         _customRatios[0] = IsCustomRatio(_profile.First);
         _customRatios[1] = IsCustomRatio(_profile.Second);
@@ -66,7 +64,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            var monitors = new DisplayService().Detect().Where(m => !m.IsVirtual).ToArray();
+            var detected = new DisplayService().Detect();
+            var monitors = detected.Where(m => !m.IsVirtual).ToArray();
+            _canRecoverOffscreen=!detected.Any(m=>m.IsVirtual);
             _updating = true;
             MonitorPicker.ItemsSource = monitors;
             MonitorPicker.SelectedItem = monitors.FirstOrDefault(m => m.IsPrimary) ?? monitors.FirstOrDefault();
@@ -327,13 +327,10 @@ public partial class MainWindow : Window
         _invalidInput = false;
         ErrorText.Text = "";
         Render();
-        bool saved=false; try { if(!_previewOnly){_store.Save(_profile); saved=true;} }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-        { ErrorText.Text = $"Could not save profile: {ex.Message}"; }
         if (!_session.IsActive)
         {
             StatusText.Text = "Local preview ready";
-            StatusDetail.Text = _previewOnly?"Preview only. The saved profile and Windows display settings have not changed.":saved ? "Profile saved locally. Windows display settings have not changed." : "Preview updated, but profile could not be saved.";
+            StatusDetail.Text = "Preview kept in memory. Windows display settings have not changed.";
         }
         if(_readinessCount!=_profile.Screens.Count)_=RefreshDriverReadiness();
     }
@@ -607,6 +604,7 @@ public partial class MainWindow : Window
         try
         {
             await _session.DisposeAsync();
+            if(!_previewOnly&&!_session.RecoveryNeedsAttention)SessionArtifacts.ClearLocalTransientData();
             _tray?.Dispose();_tray=null;
             // Exit the current Closing event before initiating the final close.
             _ = Dispatcher.BeginInvoke(new Action(Close));

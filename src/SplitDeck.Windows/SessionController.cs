@@ -7,7 +7,7 @@ using SplitDeck.Core;
 
 namespace SplitDeck.Windows;
 
-internal sealed record HelperRequest(string Mode,int ParentId,long ParentStarted,string Pipe,string Token,string? Monitor,LayoutProfile? Profile,int ScreenCount=2);
+internal sealed record HelperRequest(string Mode,int ParentId,long ParentStarted,string Pipe,string Token,string? Monitor,LayoutProfile? Profile,int ScreenCount=2,bool RetainDiagnostics=false);
 internal sealed record HelperMessage(string Type,string Text);
 public sealed class SessionController:IAsyncDisposable
 {
@@ -15,6 +15,7 @@ public sealed class SessionController:IAsyncDisposable
  internal int? HelperId=>current?.Helper?.Id;
  internal async Task WaitForHelperExitAsync(TimeSpan timeout){if(current?.Helper is { } helper)await helper.WaitForExitAsync().WaitAsync(timeout);}
  public bool IsActive{get;private set;}public string CaptureSummary{get;private set;}="";
+ public bool RecoveryNeedsAttention{get;private set;}
  private readonly DriverReadinessCache readiness;private int readinessCount=2;
  // Rendering reads this snapshot only; trust, file and device checks run on the pool.
  public bool IsDriverInstalled=>readiness.State.Ready;
@@ -29,7 +30,8 @@ public sealed class SessionController:IAsyncDisposable
   public void Dispose(){try{Writer?.Dispose();}catch(Exception e)when(e is IOException or ObjectDisposedException){}Pipe.Dispose();Helper?.Dispose();Cancel.Dispose();}
  }
  private readonly Func<IReadOnlyList<string>,bool,Process> launch;private readonly Action accountCheck;private readonly TimeSpan startupTimeout;
- public SessionController():this(StartChild,RequireSupportedAccount,TimeSpan.FromSeconds(90)){}
+ private readonly bool retainDiagnostics;
+ public SessionController(bool retainDiagnostics=false):this(StartChild,RequireSupportedAccount,TimeSpan.FromSeconds(90)){this.retainDiagnostics=retainDiagnostics;}
  internal SessionController(Func<IReadOnlyList<string>,bool,Process> launch,Action accountCheck,TimeSpan timeout){this.launch=launch;this.accountCheck=accountCheck;startupTimeout=timeout;readiness=new(()=>DriverInstallation.InstalledForCount(Volatile.Read(ref readinessCount)));}
  private Attempt? current;private readonly SemaphoreSlim gate=new(1,1);private readonly SemaphoreSlim writes=new(1,1);private bool disposed;
  public Task SetupDriverAsync(CancellationToken ct=default)=>StartAsync("install",null,null,ct);
@@ -57,10 +59,10 @@ public sealed class SessionController:IAsyncDisposable
    string folder=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SplitDeck","requests");string path=Path.Combine(folder,id+".json");
    var ready=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
    try{
-    Directory.CreateDirectory(folder);using var parent=Process.GetCurrentProcess();var request=new HelperRequest(mode,parent.Id,parent.StartTime.ToUniversalTime().Ticks,pipeName,token,monitor?.DeviceName,profile,screenCount);
+    Directory.CreateDirectory(folder);using var parent=Process.GetCurrentProcess();var request=new HelperRequest(mode,parent.Id,parent.StartTime.ToUniversalTime().Ticks,pipeName,token,monitor?.DeviceName,profile,screenCount,retainDiagnostics);
     await File.WriteAllTextAsync(path,JsonSerializer.Serialize(request),ct);
     using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct,attempt.Cancel.Token);timeout.CancelAfter(startupTimeout);
-    StatusChanged?.Invoke("Waiting for Windows approval...");attempt.Helper=launch(["--helper",path],true);
+    StatusChanged?.Invoke("Waiting for Windows approval...");attempt.Helper=launch(["--helper",path],true);if(mode=="apply")RecoveryNeedsAttention=true;
     await attempt.Pipe.WaitForConnectionAsync(timeout.Token);
     var reader=new StreamReader(attempt.Pipe,Encoding.UTF8,false,4096,true);attempt.Writer=new StreamWriter(attempt.Pipe,new UTF8Encoding(false),4096,true){AutoFlush=true};
     string? hello=await reader.ReadLineAsync(timeout.Token);if(hello!=token){reader.Dispose();throw new IOException("Display helper authentication failed.");}
@@ -72,7 +74,7 @@ public sealed class SessionController:IAsyncDisposable
  }
  private async Task ReadMessagesAsync(Attempt attempt,StreamReader reader,TaskCompletionSource ready,string requestPath)
  {
-  Exception? error=null;bool finished=false;try{string? line;while((line=await reader.ReadLineAsync(attempt.Cancel.Token))is not null){var message=JsonSerializer.Deserialize<HelperMessage>(line)??throw new IOException("Invalid display helper reply.");StatusChanged?.Invoke(message.Text);switch(message.Type){case "ACTIVE":CaptureSummary=message.Text;IsActive=true;ready.TrySetResult();break;case "COMPLETE":finished=true;ready.TrySetResult();break;case "ERROR":error=new InvalidOperationException(message.Text);ready.TrySetException(error);break;case "RESTORED":finished=true;attempt.Restored=true;IsActive=false;break;}}
+  Exception? error=null;bool finished=false;try{string? line;while((line=await reader.ReadLineAsync(attempt.Cancel.Token))is not null){var message=JsonSerializer.Deserialize<HelperMessage>(line)??throw new IOException("Invalid display helper reply.");StatusChanged?.Invoke(message.Text);switch(message.Type){case "ACTIVE":CaptureSummary=message.Text;IsActive=true;ready.TrySetResult();break;case "COMPLETE":finished=true;ready.TrySetResult();break;case "ERROR":error=new InvalidOperationException(message.Text);ready.TrySetException(error);break;case "RESTORED":finished=true;attempt.Restored=true;RecoveryNeedsAttention=false;IsActive=false;break;}}
    if(!finished){error??=new IOException("Display helper disconnected without confirming recovery.");ready.TrySetException(error);}
   }catch(Exception e){error=e;ready.TrySetException(e);StatusChanged?.Invoke(e.Message);}finally{IsActive=false;readiness.Invalidate();reader.Dispose();try{attempt.Writer?.Dispose();}catch(Exception e)when(e is IOException or ObjectDisposedException){}attempt.Writer=null;attempt.Pipe.Dispose();try{File.Delete(requestPath);}catch(Exception e)when(e is IOException or ObjectDisposedException){}attempt.Error=error;attempt.End.TrySetResult();if(error is not null)StatusChanged?.Invoke("Session ended with an error: "+error.Message);SessionEnded?.Invoke();}
  }
@@ -84,7 +86,7 @@ public sealed class SessionController:IAsyncDisposable
    // A completed helper's operation error remains visible, but cannot prevent app close.
    // A timeout with a live helper still aborts disposal and permits a later retry.
    try{await RestoreAsync();}catch(InvalidOperationException)when(current?.End.Task.IsCompleted==true){}
-   if(current is { } attempt){await attempt.Reader;attempt.Dispose();current=null;}
+   if(current is { } attempt){await attempt.Reader;if(attempt.Helper is { } helper&&helper.Id!=Environment.ProcessId)await helper.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));attempt.Dispose();current=null;}
    disposed=true;
   }finally{gate.Release();}
  }

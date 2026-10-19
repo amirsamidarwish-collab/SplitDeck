@@ -4,7 +4,7 @@ If the desktop becomes slow or the cursor stops responding normally, restore bef
 
 ## The download has no executable
 
-Use `SplitDeck-0.2.4-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). GitHub's source-code ZIP contains source files. Extract the complete portable ZIP before opening `SplitDeck.exe`; moving only the executable leaves out its runtime and driver assets.
+Use `SplitDeck-0.2.5-windows-x64.zip` from [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases). GitHub's source-code ZIP contains source files. Extract the complete portable ZIP before opening `SplitDeck.exe`; moving only the executable leaves out its runtime and driver assets.
 
 ## Setup does nothing or Apply is disabled
 
@@ -29,6 +29,8 @@ Restore first. Check that the physical monitor is awake, connected and selected,
 The physical monitor remains in Windows Display Settings because it presents the virtual images. Do not disable it while SplitDeck is active. Games, protected content and fullscreen modes can require separate compatibility work; a working editor preview does not prove they can be captured.
 
 ## An app is visible only in the taskbar
+
+The v0.2.5 candidate adds restoration for windows opened during the split. Opening the editor normally also attempts to bring fully offscreen windows back onto an attached physical desktop, without Apply or an administrator prompt, when no session owns the machine lock. This is source-reviewed behavior and has not yet been confirmed in a live trial. See the [candidate notes](restoration-v0.2.5.md).
 
 SplitDeck moves eligible windows that were on the selected physical monitor when Apply began. A minimized window stays minimized. New windows can remember a previous monitor, and some apps manage their own positions.
 
@@ -58,7 +60,7 @@ These paths belong to the account running the editor and the machine-wide driver
 | --- | --- |
 | `%LocalAppData%/SplitDeck/operations.log` | Editor operation errors |
 | `%LocalAppData%/SplitDeck/last-error.txt` | Last command or startup error, when recorded |
-| `%LocalAppData%/SplitDeck/profile.json` | Saved layout |
+| `%LocalAppData%/SplitDeck/profile.json` | Legacy saved layout; ignored by v0.2.5 and cleared after a confirmed normal close |
 | `%ProgramData%/SplitDeck/Driver/owner.json` | Managed device IDs |
 | `%ProgramData%/SplitDeck/Driver/sessions` | Recovery journals and diagnostic sidecars |
 

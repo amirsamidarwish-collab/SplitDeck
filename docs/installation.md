@@ -2,13 +2,15 @@
 
 ## Before you start
 
+v0.2.5 is a source-reviewed, build-only candidate. Its restoration and scaling changes have not been exercised in a live split or reboot trial. See the [candidate notes](restoration-v0.2.5.md).
+
 The portable package targets Windows x64 with a Direct3D 11-capable GPU. Development testing used Windows 10 Pro build 19045. Setup and Apply require signing into Windows with an administrator account and approving UAC. This experimental release does not support a standard-user session elevated through a different account.
 
 Keep the monitor awake and Windows unlocked while setting up or applying a layout. Leave free disk space for the extracted package, driver files and recovery journals. The app has been tested on the development PC; installation on a fresh machine remains unverified.
 
 ## Extract the portable package
 
-1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.4-windows-x64.zip`. If the repository is private, GitHub access is required.
+1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.5-windows-x64.zip`. If the repository is private, GitHub access is required.
 2. Use Windows' **Extract All** to unpack the ZIP. `SplitDeck.exe` is at the ZIP's root.
 3. Open `SplitDeck.exe` from the extracted folder. Keep the DLLs, `assets` and other accompanying files there.
 
@@ -16,10 +18,10 @@ The package includes the .NET runtime and driver assets. You do not need a separ
 
 `SplitDeck.exe` is not code signed. The bundled driver DLL and catalog have valid signatures; those signatures do not cover the app executable. Windows may show an unfamiliar-app warning.
 
-The release also provides `SplitDeck-0.2.4-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
+The release also provides `SplitDeck-0.2.5-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
 
 ```powershell
-Get-FileHash .\SplitDeck-0.2.4-windows-x64.zip -Algorithm SHA256
+Get-FileHash .\SplitDeck-0.2.5-windows-x64.zip -Algorithm SHA256
 ```
 
 Compare it with the value in the `.sha256` file. If they differ, download the ZIP again before running it.
@@ -34,6 +36,8 @@ If the handles are locked, set exact visible width and height to `0` for each sc
 Select your physical monitor, then choose **2 screens** or **3 screens**. The portrait/center/portrait preset creates three regions and makes the center primary. Select a screen's tab or preview region to edit it.
 
 Visible dimensions describe the pixels assigned on the physical panel. Render dimensions describe the virtual monitor's desktop resolution. Keep rendering matched to visible pixels for the default native-size configuration. Higher render resolutions add work and are scaled down into the same physical space.
+
+The candidate also adjusts Windows scaling on the managed virtual outputs so higher render detail does not automatically make text tiny. It chooses the nearest supported scale step and restores the prior virtual scale before disabling those outputs. The physical monitor's scaling is left unchanged. This behavior remains unverified at runtime.
 
 Use `0` for an automatic dimension. With a ratio lock, one explicit visible dimension can determine the other only when it produces whole pixels. Conflicting width, height and ratio values show an error and disable Apply. Exact visible widths reserve their pixels first; automatic regions divide the remaining width according to their shares.
 
@@ -53,6 +57,8 @@ An unrelated MttVDD or Virtual Display Driver installation can block setup. Spli
 
 ## Apply and place your apps
 
+Each new editor starts with a fresh native-render layout. Edits are kept in memory rather than saved for the next launch. After successful desktop restoration and close, known local settings/log files and completed ordinary-session diagnostics are removed. Recovery records remain if cleanup is unconfirmed. The installed driver and ownership metadata remain; closing the app does not uninstall the driver or erase other apps' data.
+
 Click **Apply layout** after the preview is valid and the driver is ready. The helper enables the configured virtual outputs and starts presentation. The physical output remains active, so Windows displays it alongside the virtual screens in Display Settings.
 
 SplitDeck moves eligible existing windows from the selected physical monitor into the virtual work areas. Owned modal dialogs move with their captured app. A minimized app stays minimized; its saved restore position moves into the virtual desktop. Apps with minimum widths larger than a region can extend across a boundary.
@@ -71,4 +77,4 @@ The emergency shortcut depends on the presenter running. A separate watchdog han
 
 Restore the desktop and close older SplitDeck editors first. Extract a new portable release into a separate folder, then launch that copy and run Setup if requested. Use v0.2.0 or newer after preparing three managed devices; older builds only understand two.
 
-The profile is stored in `%LocalAppData%/SplitDeck/profile.json` for the account running the editor. Deleting a portable folder does not uninstall the Windows driver or remove that profile.
+Older versions stored a profile in `%LocalAppData%/SplitDeck/profile.json`. v0.2.5 ignores it and clears it after a confirmed normal close. Deleting a portable folder does not uninstall the Windows driver.
