@@ -28,14 +28,14 @@ internal sealed class CaptureMetadataProfiler(string source)
     var dirtyResult=duplication.GetFrameDirtyRects(dirtyCapacity,dirty,out uint dirtyBytes);
     var moveResult=duplication.GetFrameMoveRects(moveCapacity,moves,out uint moveBytes);
     lastRead=FrameMetadataBuffer.Validate(dirtyResult.Code,moveResult.Code,dirtyBytes,moveBytes,dirty.Length,moves.Length);
-   }catch(Exception){lastRead=default;} // Failure preserves the authoritative full acquired image.
+   }catch(Exception){lastRead=default;}
   }
   return FrameCopyPolicy.Plan(frameWidth,frameHeight,initialized,identityRotation,lastRead.Available,dirty.AsSpan(0,lastRead.DirtyLength),moves.AsSpan(0,lastRead.MoveLength),destinations);
  }
  internal void Observe(OutduplFrameInfo info,int frameWidth,int frameHeight,long frame,FrameCopyPlan plan)
  {
   Volatile.Write(ref width,frameWidth);Volatile.Write(ref height,frameHeight);Interlocked.Increment(ref frames);
-  // FullCopyBytes retains the old full-image baseline for before/after comparison.
+
   Interlocked.Add(ref copyBytes,(long)frameWidth*frameHeight*4);Interlocked.Add(ref actualCopyBytes,plan.CopyBytes);
   if(plan.FullCopy)Interlocked.Increment(ref fullFrames);else Interlocked.Increment(ref partialFrames);
   Interlocked.Increment(ref reasonFrames[(int)plan.Reason]);

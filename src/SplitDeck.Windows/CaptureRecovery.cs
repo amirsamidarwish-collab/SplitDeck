@@ -26,8 +26,8 @@ internal static class DriverDisable
  {
   var errors=new List<Exception>();
   foreach(string id in ids)try{
-   // Disabled devices can return ERROR_DEVICE_NOT_CONNECTED after reboot.
-   // Verify the native state; absence or an unverified error is not success.
+
+
    if(problemCode?.Invoke(id)==22)continue;
    var result=await run(id);
    if(result.ExitCode==1167&&problemCode?.Invoke(id)==22)continue;
@@ -55,12 +55,12 @@ internal static class OwnedOutputRecovery
  {
   bool SameIdentity(DisplaySnapshot a,DisplaySnapshot b)=>string.Equals(a.AdapterId,b.AdapterId,StringComparison.OrdinalIgnoreCase)&&string.Equals(a.DeviceKey,b.DeviceKey,StringComparison.OrdinalIgnoreCase);
   bool OwnedExtra(DisplaySnapshot c)=>!original.Any(o=>SameIdentity(o,c))&&string.Equals(c.AdapterId,"Root\\MttVDD",StringComparison.OrdinalIgnoreCase)&&ownedKeys.Contains(c.DeviceKey,StringComparer.OrdinalIgnoreCase);
-  // Removing the virtual primary can normalize physical coordinates first while
-  // retaining our explicit output-refresh override. Accept only the saved geometry
-  // at the original or planned Hz; unrelated mode/position edits still fail closed.
+
+
+
   bool KnownPhysical(DisplaySnapshot o,DisplaySnapshot c)=>c==o||expected.Any(e=>SameIdentity(e,o)&&(e==c||(e.Width==o.Width&&e.Height==o.Height&&c==o with{Hz=e.Hz})));
-  // An interrupted restore may already have restored some physical modes and disabled
-  // only one instance. Accept those states, but never replay over an unrelated edit.
+
+
   bool replay=original.Count>0&&original.All(o=>current.Any(c=>SameIdentity(o,c)&&KnownPhysical(o,c)))&&current.All(c=>original.Any(o=>SameIdentity(o,c))||OwnedExtra(c));
   bool visibleOutputRemains=current.Any(c=>!OwnedExtra(c));
   var detach=visibleOutputRemains?current.Where(c=>OwnedExtra(c)&&(replay||!c.Primary)).ToArray():[];

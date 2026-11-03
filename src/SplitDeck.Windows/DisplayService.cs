@@ -8,8 +8,8 @@ public sealed class DisplayService
 {
  public static async Task<int> RecoverOffscreenWindowsAsync()
  {
-  // Opening an existing machine lock for read with exclusive sharing needs no
-  // elevation. If a helper owns it (or access is restricted), leave windows alone.
+
+
   FileStream? recoveryLock=null;
   try{
    string path=Path.Combine(DriverInstallation.Root,"machine.lock");
@@ -58,7 +58,7 @@ public sealed class DisplayService
   foreach(var request in plan){
    int? hz=null;
    for(uint modeIndex=0;modeIndex<4096;modeIndex++){var mode=Native.DevMode.New();if(!Native.EnumDisplaySettingsEx(request.DeviceName,modeIndex,ref mode,0))break;if(mode.Width==request.Width&&mode.Height==request.Height&&Math.Abs((double)mode.Frequency-request.Hz)<=1){hz=(int)mode.Frequency;break;}}
-   if(hz is null)return false; // Driver monitor arrival/mode enumeration can be asynchronous.
+   if(hz is null)return false;
    supported.Add((request,hz.Value));
   }
   foreach(var(request,hz)in supported)SetMode(request.DeviceName,request.X,request.Y,request.Width,request.Height,hz);
@@ -92,9 +92,9 @@ public sealed class DisplayService
  internal static void Commit(){int r=Native.CommitDisplaySettings(null,0,0,0,0);if(r!=0)throw new InvalidOperationException($"Windows could not commit the layout (code {r}).");}
  internal static void RestoreBootDefaults(IReadOnlyList<DisplaySnapshot> original,IReadOnlyList<DisplaySnapshot> session)
  {
-  // CDS_NORESET stages registry defaults without changing the live desktop.
-  // Leave the boot database on the physical layout while the presenter runs;
-  // an abrupt shutdown must not save the split as the user's normal layout.
+
+
+
   var current=Snapshot();var owned=DriverInstallation.OwnedDisplayKeys();
   if(!TopologyGuard.CanRestore(original,session,current))throw new InvalidOperationException("The desktop changed externally; saved boot defaults were not replayed.");
   foreach(var saved in original.OrderByDescending(s=>s.Primary)){
@@ -107,7 +107,7 @@ public sealed class DisplayService
    var mode=DetachMode(display);int result=Native.ChangeDisplaySettingsEx(display.DeviceName,ref mode,0,0x10000001u,0);
    if(result!=0)throw new InvalidOperationException($"Windows could not reset the managed display's boot defaults ({result}).");
   }
-  // Deliberately no Commit(): applying these defaults here would end the split.
+
  }
  internal static Native.DevMode DetachMode(DisplaySnapshot display){var mode=Native.DevMode.New();mode.Fields=Native.DmPosition|Native.DmWidth|Native.DmHeight;mode.X=display.X;mode.Y=display.Y;mode.Width=0;mode.Height=0;return mode;}
  internal static bool RestoreOwned(IReadOnlyList<DisplaySnapshot> original,IReadOnlyList<DisplaySnapshot> expected)
@@ -119,8 +119,8 @@ public sealed class DisplayService
    var matched=current.Single(c=>string.Equals(c.AdapterId,saved.AdapterId,StringComparison.OrdinalIgnoreCase)&&string.Equals(c.DeviceKey,saved.DeviceKey,StringComparison.OrdinalIgnoreCase));
    SetMode(matched.DeviceName,saved.X,saved.Y,saved.Width,saved.Height,saved.Hz,saved.Primary);
   },output=>{
-  // A pending driver-disable restart need not leave an invisible desktop attached.
-  // Detach only outputs mapped to our verified device instances, never foreign ones.
+
+
    var mode=DetachMode(output);int result=Native.ChangeDisplaySettingsEx(output.DeviceName,ref mode,0,0x10000001u,0);if(result!=0)throw new InvalidOperationException($"Windows could not detach managed display {output.DeviceName} (code {result}).");
   },Commit);
   var after=Snapshot();

@@ -9,8 +9,8 @@ internal static class SessionDisplayPlan
   if(original.Count==0||original.Any(m=>m.Width<=0||m.Height<=0)||virtualModes.Count is not(2 or 3)||virtualModes.Count(m=>m.Primary)!=1)throw new ArgumentException("Physical outputs and exactly one virtual primary are required.");
   var primary=virtualModes.Single(m=>m.Primary);
   if(virtualModes.Any(m=>m.Y<primary.Y))throw new ArgumentException("Virtual sources must share the primary top edge.");
-  // Windows requires a connected desktop. Keep the original physical group intact,
-  // with its bottommost monitor sharing an edge with the virtual primary.
+
+
   var anchor=original.OrderByDescending(m=>(long)m.Y+m.Height).ThenByDescending(m=>string.Equals(m.DeviceName,selectedDevice,StringComparison.OrdinalIgnoreCase)).First();
   int shift=checked(anchor.Y+anchor.Height-primary.Y),offsetX=checked(primary.X-anchor.X);
   return OutputRefreshPolicy.PhysicalModes(original,selectedDevice,shift,outputHz).Select(m=>m with{X=checked(m.X+offsetX)}).ToArray();

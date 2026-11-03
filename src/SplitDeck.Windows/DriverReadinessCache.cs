@@ -35,7 +35,7 @@ internal sealed class DriverReadinessCache(Func<bool> probe)
    try{ready=probe();}catch(Exception ex){error=ex.Message;}
    lock(gate)
    {
-    // Setup/session changes can invalidate an in-flight answer. Never publish it.
+
     if(started!=generation)continue;
     Volatile.Write(ref state,new(true,ready,false,error));refresh=null;return;
    }

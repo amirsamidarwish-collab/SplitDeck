@@ -10,7 +10,7 @@ public static class LayoutDemandEstimator
   double panelPixels=(double)panelWidth*panelHeight;
   double sourcePixels=screens.Sum(s=>(double)s.RenderWidth*s.RenderHeight);
   double pixelsPerSecond=screens.Sum(s=>(double)s.RenderWidth*s.RenderHeight*s.RefreshHz)+panelPixels*screens.Max(s=>s.RefreshHz);
-  // Fixed, explicit comparison model, not a calibrated hardware-capacity model.
+
   double bufferBytes=(sourcePixels*2+panelPixels*2)*4;
   return new(pixelsPerSecond/1e6,pixelsPerSecond/(panelPixels*panelHz*2),bufferBytes/1048576,bufferBytes/(panelPixels*16));
  }

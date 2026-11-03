@@ -25,3 +25,33 @@ jobs:
           path: |
             artifacts/SplitDeck-*-windows-x64.zip
             artifacts/SplitDeck-*-windows-x64.zip.sha256
+  windows11-startup:
+    name: Windows 11 x64 app startup (ARM emulation)
+    needs: build
+    runs-on: windows-11-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: SplitDeck-Windows-x64-portable
+          path: portable-download
+      - name: Verify and extract the exact x64 package
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -LiteralPath portable-download -Filter '*.zip')
+          if ($archives.Count -ne 1) { throw 'Expected exactly one portable ZIP.' }
+          $archive = $archives[0]
+          $expected = (Get-Content -LiteralPath ($archive.FullName + '.sha256') -Raw).Split(' ')[0].Trim()
+          if ($expected -notmatch '^[0-9a-f]{64}$' -or (Get-FileHash -LiteralPath $archive.FullName -Algorithm SHA256).Hash -ne $expected) { throw 'Portable package hash mismatch.' }
+          Expand-Archive -LiteralPath $archive.FullName -DestinationPath "$env:RUNNER_TEMP/SplitDeck-portable"
+      - name: Check packaged editor startup on Windows 11
+        shell: pwsh
+        run: ./tools/Test-WindowsCompatibility.ps1 -ExecutablePath "$env:RUNNER_TEMP/SplitDeck-portable/SplitDeck.exe" -ReportDirectory "$env:RUNNER_TEMP/SplitDeck-compatibility" -RequireWindows11
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SplitDeck-Windows11-startup-check
+          if-no-files-found: warn
+          retention-days: 14
+          path: ${{ runner.temp }}/SplitDeck-compatibility/*

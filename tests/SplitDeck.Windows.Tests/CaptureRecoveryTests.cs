@@ -9,7 +9,7 @@ internal static class CaptureRecoveryTests
   foreach(int hr in new[]{unchecked((int)0x887A0005),unchecked((int)0x887A0006),unchecked((int)0x80070005),unchecked((int)0x887A0022)})Check(!DuplicationRecovery.IsRecoverable(hr),"device/security failures remain fatal");
   recovery.Begin(0);Check(recovery.ShouldAttempt(0),"first retry is immediate");
   Check(!recovery.ShouldAttempt(50),"retry is throttled");Check(recovery.ShouldAttempt(100),"retry after backoff");
-  recovery.Begin(2000); // Repeated ACCESS_LOST must not extend the stale-image deadline.
+  recovery.Begin(2000);
   try{recovery.ThrowIfExpired(3000);throw new Exception("Expected bounded stale capture timeout.");}catch(TimeoutException){}
   recovery.FreshFrame();recovery.ThrowIfExpired(4000);recovery.Begin(5000);Check(recovery.ShouldAttempt(5000),"fresh frame resets retry budget");
   return Task.CompletedTask;

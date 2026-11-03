@@ -9,8 +9,8 @@ using Vortice.Mathematics;
 
 internal static class NativeArrowVisibilityTests
 {
- // Offscreen only: use the real Windows arrow and production renderer, without
- // moving the pointer, opening a window, changing a display, or faking native input.
+
+
  internal static Task BothScreens()
  {
   nint arrow=System.Windows.Forms.Cursors.Arrow.Handle;var raster=NativeCursorRaster.Read(arrow);

@@ -31,7 +31,7 @@ internal static class NativeCursorGdiSafetyTests
    NativeCursorRaster.Read(System.Windows.Forms.Cursors.Arrow.Handle);
    bool after=Native.TryGetCursorInfo(ref cursor);Console.WriteLine($"CursorInfo after raster{i}: result={after},size={cursor.Size},handle={cursor.Handle}");
    if(!after)throw new Exception("Cursor query wrapper stopped succeeding after rasterization.");
-   cursor.Size=0; // Output cbSize is not promised; emulate it being overwritten on any Windows version.
+   cursor.Size=0;
   }
   return Task.CompletedTask;
  }

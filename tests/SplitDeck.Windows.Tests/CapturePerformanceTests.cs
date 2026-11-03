@@ -56,7 +56,7 @@ internal static class CapturePerformanceTests
     while(DateTime.UtcNow<deadline){
      System.Windows.Forms.Application.DoEvents();
      if(capture.Update()&&capture.Texture is { } texture){
-      // One-pixel readback belongs only to this regression; production capture never maps.
+
       context.CopySubresourceRegion(pixel,0,0,0,0,texture,0,new Vortice.Mathematics.Box(100,100,0,101,101,1));
       var mapped=context.Map(pixel,0,MapMode.Read,Vortice.Direct3D11.MapFlags.None);
       try{correct=Math.Abs(System.Runtime.InteropServices.Marshal.ReadByte(mapped.DataPointer)-80)<8&&Math.Abs(System.Runtime.InteropServices.Marshal.ReadByte(mapped.DataPointer,1)-192)<8&&Math.Abs(System.Runtime.InteropServices.Marshal.ReadByte(mapped.DataPointer,2)-32)<8;}

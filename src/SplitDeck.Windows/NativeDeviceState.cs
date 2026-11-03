@@ -3,8 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace SplitDeck.Windows;
 
-// Class-installer path for legacy root devices which PnPUtil reports disconnected.
-// Pattern and parameter scopes follow Microsoft's DevCon ControlCallback.
+
+
 internal static class NativeDeviceState
 {
  internal static DriverOperationResult Change(string id,bool enable)

@@ -17,7 +17,7 @@ public sealed class SessionController:IAsyncDisposable
  public bool IsActive{get;private set;}public string CaptureSummary{get;private set;}="";
  public bool RecoveryNeedsAttention{get;private set;}
  private readonly DriverReadinessCache readiness;private int readinessCount=2;
- // Rendering reads this snapshot only; trust, file and device checks run on the pool.
+
  public bool IsDriverInstalled=>readiness.State.Ready;
  public bool IsDriverReadinessKnown=>readiness.State.Known;
  public bool IsCheckingDriverReadiness=>readiness.State.Checking;
@@ -49,8 +49,8 @@ public sealed class SessionController:IAsyncDisposable
    ObjectDisposedException.ThrowIf(disposed,this);accountCheck();CaptureSummary="";
    if(current is { } previous){if(!previous.End.Task.IsCompleted)throw new InvalidOperationException("Restore the current session first.");await previous.Reader;previous.Dispose();current=null;}
    if(mode=="apply"){
-    // Always refresh at the operation boundary; a cached editor result cannot
-    // authorize activation. The elevated helper validates again independently.
+
+
     await RefreshDriverReadinessAsync(profile!.Screens.Count).WaitAsync(ct);
     if(!IsDriverInstalled)throw new InvalidOperationException("Set up the SplitDeck driver before applying a layout."+(DriverReadinessError is { } error?" "+error:""));
    }else readiness.Invalidate();
@@ -83,8 +83,8 @@ public sealed class SessionController:IAsyncDisposable
  public async ValueTask DisposeAsync()
  {
   if(current?.Writer is null)current?.Cancel.Cancel();await gate.WaitAsync();try{
-   // A completed helper's operation error remains visible, but cannot prevent app close.
-   // A timeout with a live helper still aborts disposal and permits a later retry.
+
+
    try{await RestoreAsync();}catch(InvalidOperationException)when(current?.End.Task.IsCompleted==true){}
    if(current is { } attempt){await attempt.Reader;if(attempt.Helper is { } helper&&helper.Id!=Environment.ProcessId)await helper.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));attempt.Dispose();current=null;}
    disposed=true;

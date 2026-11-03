@@ -3,6 +3,7 @@ using SplitDeck.Core;
 using System.Xml.Linq;
 if(args.Length==2&&args[0]=="--window-rescue-fixture")return await NativeWindowRescueTests.RunFixtureAsync(args[1]);
 var tests=new List<(string,Func<Task>)>{("Safety regressions",SafetyTests.Run),
+ ("Native taskbar settings use the Windows page without commands or elevation",TaskbarSettingsTests.NativeSettingsBoundary),
  ("Paced mixed-refresh capture retains fast opportunities and slow-source budget",PacedCaptureTests.MixedRates),
  ("Optional telemetry survives a transient sharing lock and partial JSON",OptionalTelemetryTests.Sharing),
  ("Presentation waits preserve fractional deadlines across paired capture clocks",PresentationWaitTests.FractionalDeadlines),

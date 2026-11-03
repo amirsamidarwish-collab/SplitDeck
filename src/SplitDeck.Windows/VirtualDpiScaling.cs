@@ -6,8 +6,8 @@ namespace SplitDeck.Windows;
 
 internal sealed record VirtualDpiChange(string DeviceKey,string DeviceName,int OriginalRelative,int AppliedRelative,int Percent,double RenderDensity=1,bool Restored=false);
 
-// Windows stores scale per display source. Only owned virtual sources are changed;
-// the physical monitor supplies the reference DPI and is never written here.
+
+
 internal static class VirtualDpiScaling
 {
  private static readonly int[] Percentages=[100,125,150,175,200,225,250,300,350,400,450,500];
@@ -18,8 +18,8 @@ internal static class VirtualDpiScaling
   if(previous==0)throw new InvalidOperationException("Cannot read the physical monitor's DPI safely.");
   nint probe=0;
   try{
-   // An invisible, per-monitor-aware window gives the effective DPI through the
-   // supported GetDpiForWindow API, including the user's own scaling choice.
+
+
    probe=Native.CreateWindowEx(0x08000080,"STATIC","",0x80000000,monitor.X+monitor.Width/2,monitor.Y+monitor.Height/2,1,1,0,0,Native.GetModuleHandle(null),0);
    uint dpi=probe==0?0:GetDpiForWindow(probe);
    if(dpi is <48 or >768)throw new InvalidOperationException("Cannot establish the physical monitor's desktop scaling.");
@@ -62,7 +62,7 @@ internal static class VirtualDpiScaling
    var source=sources.Single(s=>s.Name==display.DeviceName);var current=Read(source);
    int requested=restoring?change.OriginalRelative:change.AppliedRelative;
    if(current.Current==requested){if(restoring)onRestored?.Invoke(change);continue;}
-   // Do not replace a later user scaling edit with stale recovery state.
+
    if(restoring&&current.Current!=change.AppliedRelative){onRestored?.Invoke(change);continue;}
    if(requested<current.Minimum||requested>current.Maximum)throw new InvalidOperationException("The saved virtual DPI is outside Windows' current supported range.");
    var packet=new ScaleSet{Header=Header.For(-4,24,source),Relative=requested};
@@ -77,9 +77,9 @@ internal static class VirtualDpiScaling
 
  private static ScaleGet Read(Source source)
  {
-  // Source-DPI packet types -3/-4 are used by Windows Settings but are not part
-  // of the documented SDK contract. Validate ABI/ranges and fail before session
-  // activation if this Windows version rejects them; never edit DPI registry keys.
+
+
+
   if(Marshal.SizeOf<ScaleGet>()!=32||Marshal.SizeOf<ScaleSet>()!=24)throw new InvalidOperationException("Unsupported display scaling packet layout.");
   var packet=new ScaleGet{Header=Header.For(-3,32,source)};int result=DisplayConfigGetDeviceInfo(ref packet);
   if(result!=0)throw new Win32Exception(result,"Windows does not expose per-display scaling for "+source.Name+".");

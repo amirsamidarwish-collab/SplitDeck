@@ -38,7 +38,7 @@
       <DockPanel Margin="25,0" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
           <Grid Width="28" Height="25" Margin="0,0,10,0"><Grid.ColumnDefinitions><ColumnDefinition Width="16"/><ColumnDefinition Width="4"/><ColumnDefinition Width="8"/></Grid.ColumnDefinitions><Border Grid.Column="0" Background="#C3F18B" CornerRadius="3"/><Border Grid.Column="2" Background="#EDF3E9" CornerRadius="3"/></Grid>
-          <TextBlock Text="SplitDeck - EXPERIMENTAL v0.2.5" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="SplitDeck - EXPERIMENTAL v0.2.6" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
           <TextBlock Text="LOCAL DISPLAY EDITOR" Foreground="{StaticResource Muted}" FontSize="10" FontWeight="SemiBold" Margin="24,3,0,0" VerticalAlignment="Center"/>
         </StackPanel>
       </DockPanel>
@@ -59,6 +59,16 @@
             <Button Content="Reverse order" Click="SwapButton_Click" Style="{StaticResource ButtonStyle}"/>
           </WrapPanel>
           <TextBlock x:Name="DividerHint" Visibility="Collapsed" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+          <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,12">
+            <StackPanel>
+              <DockPanel LastChildFill="True">
+                <Button x:Name="TaskbarSettingsButton" DockPanel.Dock="Right" Content="Open Windows taskbar settings" Click="TaskbarSettingsButton_Click" Style="{StaticResource ButtonStyle}" Margin="12,0,0,0" AutomationProperties.Name="Open Windows taskbar settings"/>
+                <TextBlock Text="Windows taskbar" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock x:Name="TaskbarPositionHelp" Text="Choose Left, Top, Right or Bottom in Windows Settings. Windows 10: Taskbar location on screen. Windows 11: Taskbar behaviors > Taskbar position, if your Windows update includes it." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0"/>
+              <TextBlock Text="Windows saves this preference. Closing SplitDeck does not undo changes made in Settings." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,4,0,0"/>
+            </StackPanel>
+          </Border>
           <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="0,0,0,12">
             <StackPanel>
               <TextBlock Text="Estimated layout demand" FontWeight="SemiBold" Margin="0,0,0,9"/>

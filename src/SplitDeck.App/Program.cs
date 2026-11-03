@@ -16,6 +16,7 @@ public static class Program
  {
   try{
    if(HelperRuntime.IsHelperCommand(args))return HelperRuntime.RunAsync(args).GetAwaiter().GetResult();
+   if(args.Length==2&&args[0]=="--compatibility-smoke")return CompatibilitySmoke.Run(args[1]);
    if(args.Length==3&&args[0]=="--recover-pending-restart-desktop"){Diagnostics.RecoverPendingRestartDesktopAsync(args[1],args[2]).GetAwaiter().GetResult();return 0;}
    if(args.Length==2&&args[0]=="--diagnose"){Diagnostics.WriteAsync(args[1]).GetAwaiter().GetResult();return 0;}
    if(args.Length==2&&args[0]=="--setup-driver"){Diagnostics.SetupManagedDriverAsync(args[1]).GetAwaiter().GetResult();return 0;}

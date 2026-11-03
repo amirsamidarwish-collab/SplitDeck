@@ -75,8 +75,8 @@ internal sealed class CaptureCadence(long ticksPerSecond,int rate)
  private readonly long period=Math.Max(1,ticksPerSecond/Math.Clamp(rate,1,1000));private long? next;
  internal bool Due(long now,int? pollingRate=null)
  {
-  // The presenter already paces these calls. A second equal/faster source clock
-  // can discard every other opportunity when cursor/vsync work shifts phase.
+
+
   if(pollingRate is >0&&requestedRate>=pollingRate)return true;
   if(next is not long due){next=now+period;return true;}if(now<due)return false;next=due+((now-due)/period+1)*period;return true;
  }

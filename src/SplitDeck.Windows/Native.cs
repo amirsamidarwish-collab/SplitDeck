@@ -30,8 +30,8 @@ internal static class Native
  [DllImport("user32.dll")] internal static extern bool GetClipCursor(out Rect rect);
  [StructLayout(LayoutKind.Sequential)]internal struct CursorInfo {public int Size;public uint Flags;public nint Handle;public Point Position;}
  [DllImport("user32.dll",SetLastError=true)]internal static extern bool GetCursorInfo(ref CursorInfo info);
- // CURSORINFO is an in/out buffer. Windows can clear cbSize on a successful
- // query, so initialize it for every call rather than just once per loop.
+
+
  internal static bool TryGetCursorInfo(ref CursorInfo info){info.Size=Marshal.SizeOf<CursorInfo>();return GetCursorInfo(ref info);}
  [StructLayout(LayoutKind.Sequential)]internal struct IconInfo{[MarshalAs(UnmanagedType.Bool)]public bool IsIcon;public uint HotX,HotY;public nint Mask,Color;}
  [DllImport("user32.dll")]internal static extern bool GetIconInfo(nint icon,out IconInfo info);

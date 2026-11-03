@@ -24,7 +24,7 @@ public static class PerformanceProbe
   var original=DisplayService.Snapshot();var display=new DisplayService();var monitors=display.Detect();
   if(monitors.Any(x=>x.IsVirtual))throw new InvalidOperationException("Restore the current split before starting the bounded benchmark.");
   var physical=monitors.FirstOrDefault(x=>x.IsPrimary&&!x.IsVirtual)??throw new InvalidOperationException("No physical primary monitor is available.");
-  // Refuse topology changes if the normal desktop cannot currently be captured.
+
   var created=CaptureDevice.ForOutput(physical.DeviceName);
   using(var device=created.Device)using(var context=created.Context)using(var capture=new GpuDesktopCapture(physical.DeviceName,device,context,30)){
    var deadline=DateTime.UtcNow.AddSeconds(5);while(capture.View is null&&DateTime.UtcNow<deadline){capture.Update();await Task.Delay(20);}
@@ -34,8 +34,8 @@ public static class PerformanceProbe
   var profile=SelectProfile(new ProfileStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SplitDeck")).Load(),threeScreenTrial,diagnosticRefreshHz,diagnosticProfile);
   LayoutEngine.Calculate(profile,physical.Width,physical.Height,physical.RefreshHz);
   if(threeScreenTrial){
-   // Device creation is an explicit Setup operation, before the trial's baseline.
-   // Do not treat a temporarily auto-attached driver output as the saved desktop.
+
+
    await using var preparation=new SessionController();
    try{await preparation.SetupDriverAsync(profile.Screens.Count);}
    finally{await preparation.WaitForHelperExitAsync(TimeSpan.FromSeconds(45));}
@@ -61,7 +61,7 @@ public static class PerformanceProbe
    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(25));await session.ApplyAsync(physical,profile,startup.Token);
    activeStartedUtc=DateTime.UtcNow;
    await File.WriteAllTextAsync(report+".active.json",JsonSerializer.Serialize(new{session.HelperId,StartedUtc=activeStartedUtc},Json));
-   await Task.Delay(1000); // Exclude the display-mode transition from steady-state samples.
+   await Task.Delay(1000);
    initialStats=await ReadCaptureStatsAsync(session.HelperId);
    await using var fixture=interactionWorkload?InteractionFixture.Start(display.Detect().Where(x=>x.IsVirtual).OrderBy(x=>x.X).ToArray(),TimeSpan.FromSeconds(20)):null;
    if(fixture is not null)await fixture.Ready.WaitAsync(TimeSpan.FromSeconds(5));var workloadDeadline=Stopwatch.StartNew();
@@ -70,8 +70,8 @@ public static class PerformanceProbe
     if(await ReadCaptureStatsAsync(session.HelperId) is JsonElement snapshot)captureTimeline.Add(snapshot);
     string? excess=PerformanceBudget.Excess(baselineCpu,sample.CpuPercent,sample.AvailableMiB,baselineGpu,sample.GpuPercent);
     budgetExceeded|=excess is not null;
-    // The manual diagnostic observes brief overhead spikes, but can never pass the
-    // budget when one occurs. Absolute resource guards still stop an unsafe trial.
+
+
     string? stopReason=desktopMenuTrial?(sample.AvailableMiB<512?"Memory below 512 MiB.":sample.CpuPercent>90?"CPU above 90%.":sample.GpuPercent>90?"GPU above 90%.":null):excess;
     violations=stopReason is null?0:violations+1;if(violations>=2){abort=stopReason;break;}
    }
@@ -82,7 +82,7 @@ public static class PerformanceProbe
    if(activeStartedUtc.HasValue)activeEndedUtc=DateTime.UtcNow;
    try{await session.RestoreAsync();}
    catch(Exception e){error=(error is null?"":error+" ")+"Restore: "+e.Message;}
-   // Closing startup IPC is only a stop signal. Do not confuse it with completed recovery.
+
    try{
     await session.WaitForHelperExitAsync(TimeSpan.FromSeconds(45));helperExited=true;
     for(int attempt=0;attempt<20;attempt++){

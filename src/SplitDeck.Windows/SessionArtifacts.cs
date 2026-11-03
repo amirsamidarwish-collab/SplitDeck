@@ -4,8 +4,8 @@ namespace SplitDeck.Windows;
 
 public static class SessionArtifacts
 {
- // Settings stay in memory in the editor. Clear only this application's known
- // local transient files after confirmed recovery; never touch other app data.
+
+
  public static void ClearLocalTransientData()
  {
   try{
@@ -26,7 +26,7 @@ public static class SessionArtifacts
   try{
    var journal=JsonSerializer.Deserialize<RecoveryJournal>(File.ReadAllText(full));
    if(journal is null||!journal.Complete||journal.RetainDiagnostics)return;
-   // The watcher calls this only after the helper exits, under the machine lease.
+
    foreach(string suffix in new[]{".ready",".heartbeat",".performance",".topology",".display-adapters",".window-move",".window-restore",".error.txt"})TryDelete(full+suffix);
    TryDelete(full);
   }catch(Exception error)when(error is IOException or UnauthorizedAccessException or JsonException){}

@@ -3,7 +3,7 @@ internal static class TopologyGuard
 {
  internal static bool CanRestore(IReadOnlyList<DisplaySnapshot> original,IReadOnlyList<DisplaySnapshot> expected,IReadOnlyList<DisplaySnapshot> current)
  {
-  // Include all outputs: a newly attached monitor is an external topology change too.
+
   if(current.Count==original.Count&&original.All(current.Contains))return true;
   return current.Count==expected.Count&&expected.All(e=>current.Contains(e))&&original.All(o=>current.Any(c=>c.AdapterId==o.AdapterId&&c.DeviceKey==o.DeviceKey));
  }

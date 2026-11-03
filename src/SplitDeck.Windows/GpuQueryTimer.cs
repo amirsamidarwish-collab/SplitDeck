@@ -4,8 +4,8 @@ namespace SplitDeck.Windows;
 
 internal sealed record GpuTimerSnapshot(bool Available,string? UnavailableReason,long Samples,int Pending,long Skipped,long InvalidSamples,double AverageMilliseconds,double MaxMilliseconds);
 
-// Timestamp intervals on this immediate context, not whole-GPU busy time. Optional
-// diagnostics must never wait for the GPU or force submission to obtain an answer.
+
+
 internal sealed class GpuQueryTimer:IDisposable
 {
  private readonly ID3D11DeviceContext context;private readonly List<Slot> all=[];private readonly Queue<Slot> available=new(),pending=new();
@@ -35,7 +35,7 @@ internal sealed class GpuQueryTimer:IDisposable
  {
   if(!enabled||disposed)return;
   try{
-   // At most four old slots, checked once each; S_FALSE exits immediately.
+
    while(pending.TryPeek(out var slot)){
     var disjointState=Read(slot.Disjoint!,out QueryDataTimestampDisjoint data);if(disjointState==GpuQueryReadState.Pending)return;if(disjointState==GpuQueryReadState.Unavailable){Disable("Timestamp-disjoint query failed.");return;}
     var startState=Read(slot.Start!,out ulong start);if(startState==GpuQueryReadState.Pending)return;if(startState==GpuQueryReadState.Unavailable){Disable("Start timestamp query failed.");return;}

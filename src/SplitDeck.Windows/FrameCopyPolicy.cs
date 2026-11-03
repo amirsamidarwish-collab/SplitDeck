@@ -33,8 +33,8 @@ internal static class FrameCopyPolicy
    pixels+=(long)(rectangle.Right-rectangle.Left)*(rectangle.Bottom-rectangle.Top);destinations[i]=rectangle;
    if(pixels>maximumPartialPixels)return Full(FrameCopyReason.HighCoverage);
   }
-  // Sum includes overlaps deliberately: conservative coverage bounds both copied
-  // bytes and command count, while duplicate destinations remain pixel-correct.
+
+
   return new(false,count,pixels*4,FrameCopyReason.Partial);
  }
 }
@@ -45,8 +45,8 @@ internal static class GpuFrameCopy
   if(plan.FullCopy){context.CopyResource(destination,acquired);return;}
   for(int i=0;i<plan.RectangleCount;i++){
    var r=rectangles[i];
-   // The acquired image already includes every move and dirty update. Reading
-   // its destination pixels also handles overlapping moves without a scratch image.
+
+
    context.CopySubresourceRegion(destination,0,(uint)r.Left,(uint)r.Top,0,acquired,0,new Vortice.Mathematics.Box(r.Left,r.Top,0,r.Right,r.Bottom,1));
   }
  }

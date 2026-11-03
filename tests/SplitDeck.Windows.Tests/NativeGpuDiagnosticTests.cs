@@ -18,8 +18,8 @@ internal static class NativeGpuDiagnosticTests
     timer.Poll();bool sampled=timer.Begin(frame);context.CopyResource(destination,source);if(sampled)timer.End();
    }
    calls.Stop();
-   // This OFFSCREEN UNIT TEST has no Present to submit the command stream. The
-   // test submits once; production GpuQueryTimer never Flushes, maps or waits.
+
+
    context.Flush();var deadline=Stopwatch.StartNew();
    while(timer.Snapshot.Pending>0&&deadline.Elapsed<TimeSpan.FromSeconds(3)){timer.Poll();if(timer.Snapshot.Pending>0)Thread.Sleep(1);}
    var result=timer.Snapshot;

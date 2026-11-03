@@ -9,8 +9,8 @@ using Vortice.DXGI;
 
 namespace SplitDeck.Windows;
 
-// Windows rasterizes only the small cursor, once per HCURSOR change. Desktop pixels
-// stay on the GPU. Two backgrounds retain both alpha blending and AND/XOR cursors.
+
+
 internal sealed class NativeCursorRenderer:IDisposable
 {
  private const string Shader="""
@@ -45,7 +45,7 @@ internal sealed class NativeCursorRenderer:IDisposable
   if(slot<0||desktopViews[slot] is not { } desktop){LastStatus=$"Outside source or no image at {cursor.Position.X},{cursor.Position.Y}";return;}
   GpuCursorShape shape;
   try{shape=cache.Get(cursor.Handle,CreateShape,x=>x.Dispose());}
-  catch(System.ComponentModel.Win32Exception e){LastStatus="Raster failed: "+e.Message;return;} // A cursor can be destroyed between query and copy; retry next frame.
+  catch(System.ComponentModel.Win32Exception e){LastStatus="Raster failed: "+e.Message;return;}
   var surface=surfaces[slot];var bounds=surface.Layout.VisibleBounds;
   var p=CursorProjection.Project(surface.Source,bounds,cursor.Position.X,cursor.Position.Y,shape.Width,shape.Height,shape.HotX,shape.HotY);
   var data=new CursorConstants{Bounds=new(p.SourceU,p.SourceV,p.SourceWidth,p.SourceHeight),Options=new(shape.HasAlpha?1:0,0,0,0)};

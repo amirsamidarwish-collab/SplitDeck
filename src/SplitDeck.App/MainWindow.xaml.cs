@@ -49,8 +49,8 @@ public partial class MainWindow : Window
             }
         };
         _tray=new RecoveryTray(()=>Dispatcher.BeginInvoke(async()=>{await RunOperation(async()=>{await _session.RestoreAsync();Show();WindowState=WindowState.Normal;Activate();});}));
-        // A fresh editor starts at native render density. Transfer an edited
-        // layout explicitly only for preview diagnostics or the UAC handoff.
+
+
         _profile=previewProfile??Presets.Balanced(60);
 
         _customRatios[0] = IsCustomRatio(_profile.First);
@@ -142,6 +142,7 @@ public partial class MainWindow : Window
             bool driverReady = _readinessCount==_profile.Screens.Count&&_session.IsDriverInstalled;
             SetupButton.Visibility = driverReady ? Visibility.Collapsed : Visibility.Visible;
             SetupButton.IsEnabled=!_busy&&!_previewOnly;
+            TaskbarSettingsButton.IsEnabled=!_busy&&!_previewOnly;
             RestoreButton.IsEnabled = !_busy && _session.IsActive;
             PanelNote.Text = _monitor is null ? "A physical display is needed for preview." :
                 $"One physical panel · {_monitor.RefreshHz:0.##} Hz detected output cadence. Refresh targets do not guarantee game FPS.";
@@ -497,7 +498,7 @@ public partial class MainWindow : Window
     private async Task RunOperation(Func<Task> operation)
     {
         _busy = true;
-        ApplyButton.IsEnabled = SetupButton.IsEnabled = RestoreButton.IsEnabled = false;
+        ApplyButton.IsEnabled = SetupButton.IsEnabled = RestoreButton.IsEnabled = TaskbarSettingsButton.IsEnabled = false;
         ErrorText.Text = "";
         try { await operation(); }
         catch (Exception ex)
@@ -506,8 +507,8 @@ public partial class MainWindow : Window
         }
         finally
         {
-            // Driver verification is background maintenance after the operation.
-            // Keep Restore/close available while readiness alone disables Apply.
+
+
             _busy = false; SetupButton.IsEnabled = true;
             await RefreshDriverReadiness();
         }
@@ -517,7 +518,7 @@ public partial class MainWindow : Window
     {
         _readinessCount=_profile.Screens.Count;
         Task refresh = _session.RefreshDriverReadinessAsync(_readinessCount);
-        Render(preserveDrafts:true); // Readiness changes must not replace an in-progress edit.
+        Render(preserveDrafts:true);
         await refresh;
         if (_closingAfterRestore) return;
         Render(preserveDrafts:true);
@@ -606,7 +607,7 @@ public partial class MainWindow : Window
             await _session.DisposeAsync();
             if(!_previewOnly&&!_session.RecoveryNeedsAttention)SessionArtifacts.ClearLocalTransientData();
             _tray?.Dispose();_tray=null;
-            // Exit the current Closing event before initiating the final close.
+
             _ = Dispatcher.BeginInvoke(new Action(Close));
         }
         catch (Exception ex)

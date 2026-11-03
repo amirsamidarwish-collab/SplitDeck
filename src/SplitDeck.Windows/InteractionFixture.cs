@@ -9,11 +9,11 @@ internal sealed record InteractionCaseMetrics(int CaseIndex,string Case,int Targ
 internal sealed record InteractionFixtureEvent(double ElapsedMilliseconds,int WindowIndex,int TargetIndex,string DeviceName,string Operation);
 internal sealed record InteractionFixtureResult(string Scope,bool NativeInputTested,bool Completed,bool Canceled,double ElapsedSeconds,int CompletedCases,IReadOnlyList<InteractionCaseMetrics> Cases,IReadOnlyList<InteractionFixtureEvent> Events,string? Error);
 
-/// <summary>
-/// Bounded composition workload using only windows and controls owned by this process.
-/// Programmatic menu/scroll operations exercise repaint and capture work; they do not
-/// establish the latency or correctness of real hardware mouse input.
-/// </summary>
+
+
+
+
+
 internal sealed class InteractionFixture:IAsyncDisposable
 {
  private static readonly string[] CaseNames=["animation","context menus","text scrolling","window movement","combined"];
@@ -62,7 +62,7 @@ internal sealed class InteractionFixture:IAsyncDisposable
      int caseIndex=CaseAt(seconds);
      if(caseIndex!=previousCase){foreach(var window in windows){window.Popup.Close();window.SetCase(CaseNames[caseIndex]);Record(window,"case: "+CaseNames[caseIndex]);}nextMenu=nextScroll=nextMove=seconds;previousCase=caseIndex;}
      bool menus=caseIndex is 1 or 4,scroll=caseIndex is 2 or 4,movement=caseIndex is 3 or 4;
-     // Open and close separately so the compositor sees actual popup surfaces.
+
      if(menus&&seconds>=nextMenu){
       foreach(var window in windows){if(window.Popup.Visible){window.Popup.Close();}else{window.Popup.Show(window,new Point(24,75));window.MenuAction.PerformClick();}}
       nextMenu=seconds+0.35;

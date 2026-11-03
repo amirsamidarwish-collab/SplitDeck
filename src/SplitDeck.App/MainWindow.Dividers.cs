@@ -34,7 +34,7 @@ public partial class MainWindow
    var candidate=ColumnResize.Move(_dividerStart,sender==LeftDivider?0:1,_dividerDelta/_dividerPanelWidth*100);
    LayoutEngine.Calculate(candidate,_monitor.Width,_monitor.Height,_monitor.RefreshHz);
    _profile=candidate;Render();
-  }catch(ArgumentException){} // Keep the last fitting preview near a geometry limit.
+  }catch(ArgumentException){}
   e.Handled=true;
  }
  private void Divider_Completed(object sender,DragCompletedEventArgs e)

@@ -5,8 +5,8 @@ namespace SplitDeck.App;
 
 public partial class MainWindow
 {
-    // Runs only through the explicit preview-only diagnostic command. It exercises
-    // our actual editor controls; it never applies a display layout or saves a profile.
+
+
     internal object VerifyEditorInputs()
     {
         if(!_previewOnly)throw new InvalidOperationException("Editor checks require an isolated preview instance.");

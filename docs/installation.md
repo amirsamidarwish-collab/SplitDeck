@@ -2,7 +2,7 @@
 
 ## Before you start
 
-v0.2.5 is a source-reviewed, build-only candidate. Its restoration and scaling changes have not been exercised in a live split or reboot trial. See the [candidate notes](restoration-v0.2.5.md).
+v0.2.6 adds native Windows taskbar settings access and a Windows 11 preview-startup check. Live driver, GPU and reboot compatibility on Windows 11 remain unverified. The earlier mixed-resolution zoom issue is unresolved. See the [taskbar and compatibility notes](taskbar-and-windows11.md) and [restoration candidate notes](restoration-v0.2.5.md).
 
 The portable package targets Windows x64 with a Direct3D 11-capable GPU. Development testing used Windows 10 Pro build 19045. Setup and Apply require signing into Windows with an administrator account and approving UAC. This experimental release does not support a standard-user session elevated through a different account.
 
@@ -10,7 +10,7 @@ Keep the monitor awake and Windows unlocked while setting up or applying a layou
 
 ## Extract the portable package
 
-1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.5-windows-x64.zip`. If the repository is private, GitHub access is required.
+1. Open [Releases](https://github.com/amirsamidarwish-collab/SplitDeck/releases) and download `SplitDeck-0.2.6-windows-x64.zip`. If the repository is private, GitHub access is required.
 2. Use Windows' **Extract All** to unpack the ZIP. `SplitDeck.exe` is at the ZIP's root.
 3. Open `SplitDeck.exe` from the extracted folder. Keep the DLLs, `assets` and other accompanying files there.
 
@@ -18,10 +18,10 @@ The package includes the .NET runtime and driver assets. You do not need a separ
 
 `SplitDeck.exe` is not code signed. The bundled driver DLL and catalog have valid signatures; those signatures do not cover the app executable. Windows may show an unfamiliar-app warning.
 
-The release also provides `SplitDeck-0.2.5-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
+The release also provides `SplitDeck-0.2.6-windows-x64.zip.sha256`. To read the ZIP's hash in PowerShell:
 
 ```powershell
-Get-FileHash .\SplitDeck-0.2.5-windows-x64.zip -Algorithm SHA256
+Get-FileHash .\SplitDeck-0.2.6-windows-x64.zip -Algorithm SHA256
 ```
 
 Compare it with the value in the `.sha256` file. If they differ, download the ZIP again before running it.

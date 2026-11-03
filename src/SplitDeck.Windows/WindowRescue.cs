@@ -18,8 +18,8 @@ internal static class WindowRescuePolicy
  {
   var selected=candidates.Where(c=>c.Owner==0).Select(c=>c.Handle).Distinct().ToList();var seen=selected.ToHashSet();
   if(existingOwners is not null)seen.UnionWith(existingOwners);
-  // EnumWindows returns z-order, so an owned dialog can precede its owner.
-  // Resolve only chains rooted at an eligible captured app, never orphan tools.
+
+
   for(int pass=0;pass<16;pass++){int before=selected.Count;foreach(var candidate in candidates)if(candidate.Owner!=0&&seen.Contains(candidate.Owner)&&seen.Add(candidate.Handle))selected.Add(candidate.Handle);if(selected.Count==before)break;}
   return selected;
  }
@@ -36,8 +36,8 @@ internal static class WindowRescuePolicy
   double x=left+nx*(right-left),y=top+ny*(bottom-top);
   double Distance(PixelRect t){double dx=Math.Max(t.X-x,Math.Max(0,x-((long)t.X+t.Width))),dy=Math.Max(t.Y-y,Math.Max(0,y-((long)t.Y+t.Height)));return dx*dx+dy*dy;}
   int index=Enumerable.Range(0,targets.Count).OrderBy(i=>Distance(targets[i])).First();var work=workAreas[index];
-  // Scale only size after choosing a destination from the unchanged source
-  // center. Recenter the scaled rectangle before clamping to the work area.
+
+
   int width=(int)Math.Clamp(Math.Round(originalWindow.Width*sizeScale),1,work.Width),height=(int)Math.Clamp(Math.Round(originalWindow.Height*sizeScale),1,work.Height);
   int wx=(int)Math.Clamp(Math.Round(x-width/2.0),work.X,(long)work.X+work.Width-width),wy=(int)Math.Clamp(Math.Round(y-height/2.0),work.Y,(long)work.Y+work.Height-height);
   return new(index,new(wx,wy,width,height));
@@ -49,8 +49,8 @@ internal static class WindowRescue
  private const uint AsyncPlacement=4,ShowWithoutActivation=8,AsyncPosition=0x4000,NoActivate=0x10,NoZOrder=4,NoOwnerZOrder=0x200;
  internal static List<WindowPlacementSnapshot> Capture(MonitorInfo selectedPhysical)
   =>CaptureFamily(Candidates(monitor=>string.Equals(monitor.DeviceName,selectedPhysical.DeviceName,StringComparison.OrdinalIgnoreCase)),[],IdentityProperty,false);
- // Enumerating and tagging does not move windows. The caller must persist the returned
- // combined list before removing virtual outputs, then use the ordinary RestoreAsync.
+
+
  internal static List<WindowPlacementSnapshot> CaptureAdditionalForRestore(IReadOnlyList<WindowPlacementSnapshot> existingSnapshots,MonitorInfo originalPhysical,IReadOnlyList<MonitorInfo> activeVirtuals,IReadOnlyDictionary<string,double>? renderDensities=null)
  {
   ArgumentNullException.ThrowIfNull(existingSnapshots);ArgumentNullException.ThrowIfNull(originalPhysical);ArgumentNullException.ThrowIfNull(activeVirtuals);
@@ -67,8 +67,8 @@ internal static class WindowRescue
    var projected=currentWork with{X=checked(original.X+currentWork.X-currentBounds.X),Y=checked(original.Y+currentWork.Y-currentBounds.Y)};
    originalWork=Intersection(projected,original)??original;
   }
-  // The taskbar may move to a virtual primary during the session. Prefer a
-  // work area actually saved before Apply over the physical output's live one.
+
+
   var originalPlacement=existingSnapshots.FirstOrDefault(s=>s.SourceMonitor==original);
   if(originalPlacement is not null)originalWork=Intersection(originalPlacement.SourceWorkArea,original)??originalWork;
   int left=virtualBounds.Min(r=>r.X),top=virtualBounds.Min(r=>r.Y);
@@ -102,15 +102,15 @@ internal static class WindowRescue
    var saved=byHandle[handle];
    if(IsOffscreen(saved,attached))offscreen.Add(saved);
   }
-  // Keep session properties intact, including tokens left by an incomplete journal.
+
   var tagged=CaptureFamily(offscreen,offscreen.Select(s=>s.OwnerHandle).Where(h=>h!=0).ToArray(),OffscreenIdentityProperty,false);
   var taggedHandles=tagged.Select(s=>s.Handle).ToHashSet();
   var notTagged=offscreen.Where(s=>!taggedHandles.Contains(s.Handle)).Select(s=>new WindowRescueIssue(s.Handle,s.ProcessId,"The offscreen window could not be safely tagged and was left unchanged.")).ToArray();
   try{
    var result=await ApplyAsync(tagged,saved=>{
     using var dpi=new DpiScope();
-    // A window can open or move while enumeration runs. Never replay a stale
-    // offscreen decision over a window now intersecting any attached monitor.
+
+
     var current=AttachedMonitors();if(!IsOffscreen(saved,current))throw new InvalidOperationException("The window is now on an attached monitor and was left unchanged.");
     var target=current.Where(m=>destinations.Any(c=>string.Equals(c.DeviceName,m.DeviceName,StringComparison.OrdinalIgnoreCase)&&AsRect(c.Bounds)==AsRect(m.Bounds))).OrderBy(m=>Distance(saved.NormalScreenBounds,AsRect(m.WorkArea))).FirstOrDefault();
     if(string.IsNullOrEmpty(target.DeviceName))throw new InvalidOperationException("The physical destination changed before window recovery.");
@@ -132,7 +132,7 @@ internal static class WindowRescue
     bool shell=handle==GetShellWindow()||handle==GetDesktopWindow()||className is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "Progman" or "WorkerW"||className.StartsWith("SplitDeckHost_",StringComparison.Ordinal);
     nint owner=GetWindow(handle,4);
     bool modalTool=WindowRescuePolicy.ModalTool(owner!=0,owner!=0&&!IsWindowEnabled(owner),className=="#32770"||(extended&1)!=0);
-    // Owned candidates are admitted only after their eligible owner family is known.
+
     if(!WindowRescuePolicy.Eligible(IsWindowVisible(handle),cloaked!=0,false,(extended&0x80)!=0&&!modalTool,(extended&0x08000000)!=0,(style&0x40000000)!=0,pid==Environment.ProcessId,shell))return true;
     if(!TryMonitor(handle,out var monitor)||!include(monitor))return true;
     var placement=Placement.New();if(!GetWindowPlacement(handle,ref placement))return true;
@@ -150,7 +150,7 @@ internal static class WindowRescue
   var byHandle=candidates.ToDictionary(candidate=>candidate.Handle);var saved=new List<WindowPlacementSnapshot>();var captured=existingOwners.ToHashSet();
   foreach(long handle in WindowRescuePolicy.Family(candidates.Select(c=>(c.Handle,c.OwnerHandle)).ToArray(),existingOwners)){
    var candidate=byHandle[handle];if(candidate.OwnerHandle!=0&&!captured.Contains(candidate.OwnerHandle))continue;
-   // Do not replace a token belonging to an existing or incomplete session.
+
    if(GetProp((nint)handle,identityProperty)!=0||!SameWindow(candidate)||!SetProp((nint)handle,identityProperty,(nint)candidate.Token))continue;
    if(markForRestore&&(GetProp((nint)handle,MovedProperty)!=0||!SetProp((nint)handle,MovedProperty,(nint)candidate.Token))){if(Matches(candidate,identityProperty))RemoveProp((nint)handle,identityProperty);continue;}
    saved.Add(candidate);captured.Add(handle);
@@ -185,7 +185,7 @@ internal static class WindowRescue
   if(AsRect(monitor.Bounds)!=saved.SourceMonitor)throw new InvalidOperationException("The original window monitor moved or disconnected; saved window bounds were not replayed.");
   return new Destination(saved.NormalScreenBounds,AsRect(monitor.Bounds),AsRect(monitor.WorkArea));
  },true);
- // Remove only our identity properties when preparation is abandoned before migration.
+
  internal static void Release(IReadOnlyList<WindowPlacementSnapshot> windows){foreach(var saved in windows)if(Matches(saved)){RemoveProp((nint)saved.Handle,IdentityProperty);RemoveProp((nint)saved.Handle,MovedProperty);}}
  private sealed record Destination(PixelRect Normal,PixelRect Monitor,PixelRect WorkArea);
  private sealed record Pending(WindowPlacementSnapshot Saved,Destination Target,bool Minimized,bool Maximized);
@@ -207,8 +207,8 @@ internal static class WindowRescue
     queued++;pending.Add(new(saved,target,minimized,maximized));
    }catch(Exception e)when(e is System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException or OverflowException){issues.Add(new(saved.Handle,saved.ProcessId,e.Message));}
   }
-  // Posted window-manager operations never wait for a hung application's message loop.
-  // Verify them for a bounded period and report misses without blocking desktop recovery.
+
+
   var deadline=Stopwatch.StartNew();
   while(pending.Count>0&&deadline.Elapsed<TimeSpan.FromSeconds(2)){
    for(int i=pending.Count-1;i>=0;i--){var item=pending[i];using var dpi=new DpiScope();var handle=(nint)item.Saved.Handle;

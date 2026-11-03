@@ -94,7 +94,7 @@ internal sealed class PresentationHost:IDisposable
    var presentationCadence=new PresentationCadence(Stopwatch.Frequency,presentationRate);var invalidation=new FrameInvalidationPolicy(Stopwatch.Frequency);var startup=Stopwatch.StartNew();gpuUpdateMaxTicks=new long[gpuCaptures.Count];long previousPresentCompleted=0;
    var cursorInfo=new Native.CursorInfo{Size=Marshal.SizeOf<Native.CursorInfo>()};
    while(!stop.IsCancellationRequested){
-    // Even a skipped Present needs explicit pacing; otherwise a static desktop spins.
+
     long wait=presentationCadence.WaitTicks(Stopwatch.GetTimestamp());if(wait>0&&stop.Token.WaitHandle.WaitOne(PresentationWait.Milliseconds(wait,Stopwatch.Frequency)))break;
     Forms.Application.DoEvents();
     gpuDrawTimer.Poll();
@@ -110,10 +110,10 @@ internal sealed class PresentationHost:IDisposable
     bool render=invalidation.NeedsPresent(Stopwatch.GetTimestamp(),contentChanged,cursorState,inspectFrame is not null);
     if(render){
      long drawStarted=Stopwatch.GetTimestamp();bool sampleDraw=gpuDrawTimer.Begin(FramesPresented+1);
-     // Flip-model Present detaches back buffer 0 from the output merger.
+
      context.OMSetRenderTargets(target);context.PSSetShader(ps);context.ClearRenderTargetView(target,new Color4(0.025f,0.035f,0.025f,1));
      for(int i=0;i<surfaces.Count;i++)if(cursorDesktopViews[i] is { } view){var b=surfaces[i].Layout.VisibleBounds;context.RSSetViewport(b.X,b.Y,b.Width,b.Height);context.PSSetShaderResource(0,view);context.Draw(3,0);context.PSSetShaderResource(0,null!);}
-     // The OS cursor remains on the actual virtual desktop; this projection is visual only.
+
      cursorStarted=Stopwatch.GetTimestamp();try{if(gotCursor)cursorRenderer.Draw(surfaces,cursorDesktopViews,cursorInfo);}finally{RecordMaximum(ref cursorMaxTicks,cursorQueryTicks+Stopwatch.GetTimestamp()-cursorStarted);}
      if(sampleDraw)gpuDrawTimer.End();long drawElapsed=Stopwatch.GetTimestamp()-drawStarted;Interlocked.Add(ref DrawTicks,drawElapsed);RecordMaximum(ref drawMaxTicks,drawElapsed);inspectFrame?.Invoke(device,context,back,FramesPresented);
      long presentStarted=Stopwatch.GetTimestamp();try{swap.Present(presentation.SyncInterval,presentation.Flags).CheckError();}finally{long elapsed=Stopwatch.GetTimestamp()-presentStarted;Interlocked.Add(ref PresentTicks,elapsed);RecordMaximum(ref presentMaxTicks,elapsed);}

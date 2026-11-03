@@ -18,8 +18,8 @@ internal sealed class CursorBoundaryGuard
  }
  internal CursorBoundaryResult Tick()
  {
-  // On another input desktop these queries can fail. Never write a clip or
-  // pointer position after either failed query.
+
+
   var current=readClip();if(!current.Success)return new(false,false,false);
   var cursor=readPosition();if(!cursor.Success)return new(false,false,false);
   PixelRect effective=Intersect(current.Bounds,virtualBounds)??virtualBounds;

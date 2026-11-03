@@ -20,14 +20,14 @@ try {
         $project = [xml](Get-Content -LiteralPath src/SplitDeck.App/SplitDeck.App.csproj -Raw)
         $version = [string]$project.Project.PropertyGroup.Version
         if ($version -notmatch '^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$') { throw 'The application version cannot be used as a release filename.' }
-        # A unique empty destination prevents files from an old RID or build entering this ZIP.
+
         $output = Join-Path $PSScriptRoot ('artifacts/publish-' + [Guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $output -Force | Out-Null
         & $DotnetPath publish src/SplitDeck.App -c $Configuration -r win-x64 --self-contained true -o $output -p:PublishSingleFile=false -p:DebugType=None -p:DebugSymbols=false -p:TreatWarningsAsErrors=true
         if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
         Copy-Item -LiteralPath README.md,LICENSE,THIRD-PARTY-NOTICES.md -Destination $output
         New-Item -ItemType Directory -Path (Join-Path $output 'docs'),(Join-Path $output 'licenses') -Force | Out-Null
-        Copy-Item -LiteralPath docs/installation.md,docs/troubleshooting.md,docs/performance-v0.2.2.md,docs/performance-v0.2.4.md,docs/restoration-v0.2.5.md,docs/editor-preview.png -Destination (Join-Path $output 'docs')
+        Copy-Item -LiteralPath docs/installation.md,docs/troubleshooting.md,docs/performance-v0.2.2.md,docs/performance-v0.2.4.md,docs/restoration-v0.2.5.md,docs/taskbar-and-windows11.md,docs/editor-preview.png -Destination (Join-Path $output 'docs')
         $packageRoot = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.nuget/packages' }
         $deps = Get-Content -LiteralPath (Join-Path $output 'SplitDeck.deps.json') -Raw | ConvertFrom-Json
         foreach ($library in $deps.libraries.PSObject.Properties.Name) {

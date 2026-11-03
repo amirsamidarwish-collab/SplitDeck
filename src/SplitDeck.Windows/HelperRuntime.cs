@@ -58,12 +58,12 @@ public static class HelperRuntime
    await send("STATUS",$"Configuring {layouts.Count} virtual display modes…");DriverInstallation.Configure(layouts);await DriverInstallation.EnableAsync(layouts.Count);journal=journal with{Expected=DisplayService.Snapshot(),LateWindowsCaptured=false};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));
    DriverInstallation.AtomicWrite(journalPath+".display-adapters",JsonSerializer.Serialize(DisplayService.AdapterInventory()));
    var virtuals=await WaitForVirtualsAsync(display,layouts,cancellation.Token);journal=journal with{Expected=DisplayService.Snapshot()};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));
-   // Windows requires the explicitly selected primary at (0,0); left columns can be negative.
+
    var plannedModes=SessionDisplayPlan.Build(virtuals,layouts,request.Profile.PrimaryIndex);
    var physicalModes=SessionDisplayPlan.PhysicalModes(originals,physical.DeviceName,plannedModes,outputHz);
    foreach(var mode in plannedModes.OrderByDescending(m=>m.Primary))DisplayService.SetMode(mode.DeviceName,mode.X,mode.Y,mode.Width,mode.Height,mode.Hz,mode.Primary);
    foreach(var s in physicalModes)DisplayService.SetMode(s.DeviceName,s.X,s.Y,s.Width,s.Height,s.Hz);
-   // Persist intent before commit. A crash during commit conservatively refuses stale replay.
+
    journal=journal with{Expected=physicalModes.ToList()};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));
    DisplayService.Commit();journal=journal with{Expected=DisplayService.Snapshot()};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));await Task.Delay(700);
    var all=display.Detect();
@@ -75,7 +75,7 @@ public static class HelperRuntime
    if(mismatches.Count>0)throw new InvalidOperationException("Windows changed the requested display topology. "+string.Join("; ",mismatches));
    physical=all.Single(x=>x.DeviceName==physical.DeviceName);virtuals=virtuals.Select(v=>all.Single(x=>x.DeviceName==v.DeviceName)).ToArray();
    activeVirtuals=virtuals;
-   // Persist the original scale before writing even the first source.
+
    journal=journal with{DpiChanges=VirtualDpiScaling.Plan(virtuals,layouts,physicalDpi)};
    DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));
    await VirtualDpiScaling.ApplyAsync(journal.DpiChanges??[]);
@@ -102,8 +102,8 @@ public static class HelperRuntime
   }catch(Exception e){activationError=e;}
   finally{
    if(host is not null)WritePerformance(journalPath,host);
-   // Capture late-created app windows while their virtual coordinates still
-   // identify the source. Persist them before any display is disabled.
+
+
    try{if(!journal.LateWindowsCaptured&&activeVirtuals.Length==0)throw new InvalidOperationException("Late app-window capture could not be confirmed before display teardown.");journal=journal with{Windows=WindowRescue.CaptureAdditionalForRestore(journal.Windows??[],originalPhysical,activeVirtuals,RenderDensities(journal)),LateWindowsCaptured=true};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));}
    catch(Exception e){journal=journal with{LateWindowsCaptured=false};activationError=activationError is null?e:new AggregateException(activationError,e);}
    Native.ReleaseCursor(0);try{await recovery.RevertAsync();var previous=new Native.Rect(clip.Left,clip.Top,clip.Right-clip.Left,clip.Bottom-clip.Top);Native.ClipCursor(ref previous);Native.SetCursorPos(cursor.X,cursor.Y);if(!journal.LateWindowsCaptured)throw new InvalidOperationException("Late app-window recovery remains unverified; its journal was retained.");journal=journal with{Complete=true,RestartRequired=false};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));await send("RESTORED","Original desktop restored.");}catch(Exception e){journal=journal with{RestartRequired=journal.RestartRequired||NeedsRestart(e)};DriverInstallation.AtomicWrite(journalPath,JsonSerializer.Serialize(journal));throw new AggregateException(journal.RestartRequired?"Windows requires a restart to finish disabling the virtual driver. The recovery journal remains incomplete.":"Restoration needs attention. The recovery journal was retained.",activationError is null?[e]:[activationError,e]);}
@@ -168,7 +168,7 @@ public static class HelperRuntime
     if(!journal.LateWindowsCaptured&&virtuals.Length==0)throw new InvalidOperationException("Late app-window recovery is pending and the virtual source is unavailable.");
     journal=journal with{Windows=WindowRescue.CaptureAdditionalForRestore(journal.Windows??[],physical,virtuals,RenderDensities(journal)),LateWindowsCaptured=true};DriverInstallation.AtomicWrite(path,JsonSerializer.Serialize(journal));
    }
-  }catch(Exception error)when(error is IOException or InvalidOperationException or UnauthorizedAccessException){journal=journal with{LateWindowsCaptured=false};/* Continue physical cleanup but retain the unverified window-recovery state. */}
+  }catch(Exception error)when(error is IOException or InvalidOperationException or UnauthorizedAccessException){journal=journal with{LateWindowsCaptured=false};                                                                                }
   bool OriginalRestored()=>TopologyGuard.CanRestore(journal.Original,journal.Original,DisplayService.Snapshot());
   var recovery=new RecoveryStack();
   recovery.Push(async()=>{if(OriginalRestored())await RestoreWindowsAsync(path,journal.Windows??[]);});
